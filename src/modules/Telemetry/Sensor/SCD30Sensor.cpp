@@ -24,17 +24,6 @@ int32_t SCD30Sensor::runOnce()
   scd30.startContinuousMeasurement();
   LOG_INFO("SCD30 setup:");
   LOG_INFO("%f, seconds",scd30.getMeasurementInterval());
-
-  // LOG_INFO("Init sensor: %s", sensorName);
-  // if (!hasSensor()) {
-  //   return DEFAULT_SENSOR_MINIMUM_WAIT_TIME_BETWEEN_READS;
-  // }
-  // status = scd30.begin(nodeTelemetrySensorsMap[sensorType].first, nodeTelemetrySensorsMap[sensorType].second);
-  //begin kicks off startcontinuos measurement through _init
-  // status &= scd30.selfCalibrationEnabled(true);
-  // status &= scd30.startContinuousMeasurement();
-  // status &= scd30.read();
-  // return initI2CSensor();
 }
 
 void SCD30Sensor::setup() {
