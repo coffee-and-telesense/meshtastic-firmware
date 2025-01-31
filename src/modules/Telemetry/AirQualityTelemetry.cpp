@@ -189,4 +189,8 @@ bool AirQualityTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     return false;
 }
 
+int32_t AirQualityTelemetryModule::ShareSensor(TelemetrySensor &sensor) {
+    return 0;
+}
+
 #endif

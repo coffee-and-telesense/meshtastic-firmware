@@ -27,6 +27,7 @@ int32_t SCD30Sensor::runOnce()
 }
 
 void SCD30Sensor::setup() {
+  shareSensor();
 }
 
 bool SCD30Sensor::getMetrics(meshtastic_Telemetry *measurement)

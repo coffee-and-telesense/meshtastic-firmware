@@ -24,6 +24,7 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
         aqi = Adafruit_PM25AQI();
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
     }
+    int32_t ShareSensor(TelemetrySensor &sensor);
 
   protected:
     /** Called to handle a particular incoming message
