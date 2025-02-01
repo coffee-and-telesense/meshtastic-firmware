@@ -21,7 +21,7 @@ int32_t AirQualityTelemetryModule::runOnce()
         without having to configure it from the PythonAPI or WebUI.
     */
 
-    // moduleConfig.telemetry.air_quality_enabled = 1;
+    moduleConfig.telemetry.air_quality_enabled = 1;
 
     if (!(moduleConfig.telemetry.air_quality_enabled)) {
         // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
@@ -54,6 +54,9 @@ int32_t AirQualityTelemetryModule::runOnce()
                 }
 #endif
                 return disable();
+            }
+            if (!scd30.begin()) {
+                LOG_DEBUG("could not establish i2c connection to scd30");
             }
             return 1000;
         }
@@ -189,8 +192,9 @@ bool AirQualityTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     return false;
 }
 
-int32_t AirQualityTelemetryModule::ShareSensor(TelemetrySensor &sensor) {
-    return 0;
-}
+//takes a sensor and puts it intoi the map
+// int32_t AirQualityTelemetryModule::ShareSensor(TelemetrySensor &sensor) {
+//     return 0;
+// }
 
 #endif

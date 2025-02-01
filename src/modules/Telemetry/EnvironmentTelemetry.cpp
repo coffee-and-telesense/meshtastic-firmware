@@ -395,6 +395,7 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         hasSensor = true;
     }
     if (scd30Sensor.hasSensor()) {
+        LOG_DEBUG("environemental telemetry right before scd30Sensor.getMetrics(m)");
         valid = valid && scd30Sensor.getMetrics(m);
         hasSensor = true;
     }
