@@ -109,27 +109,42 @@ bool AirQualityTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPack
 
 bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 {
-    if (!aqi.read(&data)) {
-        LOG_WARN("Skip send measurements. Could not read AQIn");
-        return false;
+    // if (!aqi.read(&data)) {
+    //     LOG_WARN("Skip send measurements. Could not read AQIn");
+    //     return false;
+    // }
+    if (!scd30.dataReady())
+    {
+      LOG_DEBUG("scd30 data not ready yet, delaying");
+      delay(500);
+    }
+    if (!scd30.read()) {
+      LOG_DEBUG("SCD30 read failed!");
+      return false;
     }
 
-    m->time = getTime();
-    m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
-    m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
-    m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
-    m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
+    m->variant.air_quality_metrics.has_co2 = true;
+    m->variant.air_quality_metrics.co2 = scd30.CO2;
+    LOG_INFO("AQ TELE: SCD30 CO2: %0.2f ppm", scd30.CO2);
+    LOG_INFO("AQ tele: in m->var->co2 etc: %f", m->variant.air_quality_metrics.co2);
 
-    m->variant.air_quality_metrics.pm10_environmental = data.pm10_env;
-    m->variant.air_quality_metrics.pm25_environmental = data.pm25_env;
-    m->variant.air_quality_metrics.pm100_environmental = data.pm100_env;
+    // m->time = getTime();
 
-    LOG_INFO("Send: PM1.0(Standard)=%i, PM2.5(Standard)=%i, PM10.0(Standard)=%i", m->variant.air_quality_metrics.pm10_standard,
-             m->variant.air_quality_metrics.pm25_standard, m->variant.air_quality_metrics.pm100_standard);
+    // m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
+    // m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
+    // m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
+    // m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
 
-    LOG_INFO("         | PM1.0(Environmental)=%i, PM2.5(Environmental)=%i, PM10.0(Environmental)=%i",
-             m->variant.air_quality_metrics.pm10_environmental, m->variant.air_quality_metrics.pm25_environmental,
-             m->variant.air_quality_metrics.pm100_environmental);
+    // m->variant.air_quality_metrics.pm10_environmental = data.pm10_env;
+    // m->variant.air_quality_metrics.pm25_environmental = data.pm25_env;
+    // m->variant.air_quality_metrics.pm100_environmental = data.pm100_env;
+
+    // LOG_INFO("Send: PM1.0(Standard)=%i, PM2.5(Standard)=%i, PM10.0(Standard)=%i", m->variant.air_quality_metrics.pm10_standard,
+    //          m->variant.air_quality_metrics.pm25_standard, m->variant.air_quality_metrics.pm100_standard);
+
+    // LOG_INFO("         | PM1.0(Environmental)=%i, PM2.5(Environmental)=%i, PM10.0(Environmental)=%i",
+    //          m->variant.air_quality_metrics.pm10_environmental, m->variant.air_quality_metrics.pm25_environmental,
+    //          m->variant.air_quality_metrics.pm100_environmental);
 
     return true;
 }

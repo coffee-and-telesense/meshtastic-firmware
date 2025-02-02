@@ -23,7 +23,7 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
         lastMeasurementPacket = nullptr;
         setIntervalFromNow(10 * 1000);
         aqi = Adafruit_PM25AQI();
-        // scd30 = SCD30Sensor();
+        SCD30Sensor scd30; // is this really where this should go
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
     }
     // int32_t ShareSensor(TelemetrySensor &sensor);
