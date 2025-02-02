@@ -192,7 +192,7 @@ void setupModules()
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
         new EnvironmentTelemetryModule();
-        if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first > 0) {
+        if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first > 0 | nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_SCD30].first > 0) {
             new AirQualityTelemetryModule();
         }
         if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
