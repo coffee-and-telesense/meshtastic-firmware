@@ -44,6 +44,7 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
      * Send our Telemetry into the mesh
      */
     bool sendTelemetry(NodeNum dest = NODENUM_BROADCAST, bool wantReplies = false);
+    bool getAQMetrics(meshtastic_AirQualityMetrics * m);  // a clone of sendTelemetry but it passes in the aq_tele in addition to other args after a sensor is read
 
   private:
     Adafruit_PM25AQI aqi;

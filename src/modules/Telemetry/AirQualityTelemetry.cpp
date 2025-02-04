@@ -55,6 +55,10 @@ int32_t AirQualityTelemetryModule::runOnce()
 #endif
                 return disable();
             }
+            scd30.setMeasurementInterval(10);
+            scd30.startContinuousMeasurement();
+            delay(2000);
+            LOG_INFO("SCd30 get measurement interval is %f, seconds",scd30.getMeasurementInterval());
             return 1000;
 
 //             if (!aqi.begin_I2C()) {
@@ -133,6 +137,11 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
     //     LOG_WARN("Skip send measurements. Could not read AQIn");
     //     return false;
     // }
+    m->time = getTime();
+    m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
+    m->variant.air_quality_metrics = meshtastic_AirQualityMetrics_init_zero;
+
+
     if (!scd30.dataReady())
     {
       LOG_DEBUG("scd30 data not ready yet, delaying");
@@ -143,12 +152,20 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
       return false;
     }
 
+    m->variant.environment_metrics.has_temperature = true;
+    m->variant.environment_metrics.has_relative_humidity = true;
     m->variant.air_quality_metrics.has_co2 = true;
-    m->variant.air_quality_metrics.co2 = scd30.CO2;
-    LOG_INFO("AQ TELE: SCD30 CO2: %0.2f ppm", scd30.CO2);
-    LOG_INFO("AQ tele: in m->var->co2 etc: %f", m->variant.air_quality_metrics.co2);
 
-    // m->time = getTime();
+    // m->variant.air_quality_metrics.co2 = scd30.CO2;
+    // LOG_INFO("AQ TELE: SCD30 CO2: %0.2f ppm", scd30.CO2);
+    // LOG_INFO("AQ tele: in m->var->co2 etc: %f", m->variant.air_quality_metrics.co2);
+
+    m->variant.environment_metrics.temperature = scd30.temperature;
+    LOG_INFO("SCD30 Temperature: %0.2f degrees C", scd30.temperature);
+    m->variant.environment_metrics.relative_humidity = scd30.relative_humidity;
+    LOG_INFO("SCD30 Relative Humidity: %0.2f %", scd30.relative_humidity);
+    m->variant.air_quality_metrics.co2 = scd30.CO2;
+    LOG_INFO("SCD30 CO2: %0.2f ppm", scd30.CO2);
 
     // m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
     // m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
