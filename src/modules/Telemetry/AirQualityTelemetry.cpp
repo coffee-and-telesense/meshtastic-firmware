@@ -64,8 +64,10 @@ int32_t AirQualityTelemetryModule::runOnce()
         return disable();
     } else {
         // if we somehow got to a second run of this module with measurement disabled, then just wait forever
-        if (!moduleConfig.telemetry.air_quality_enabled)
+        if (!moduleConfig.telemetry.air_quality_enabled) {
+            LOG_INFO("disabling air quality module");
             return disable();
+        }
 
         if (((lastSentToMesh == 0) ||
              !Throttle::isWithinTimespanMs(lastSentToMesh, Default::getConfiguredOrDefaultMsScaled(
@@ -73,9 +75,11 @@ int32_t AirQualityTelemetryModule::runOnce()
                                                                default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
             airTime->isTxAllowedChannelUtil(config.device.role != meshtastic_Config_DeviceConfig_Role_SENSOR) &&
             airTime->isTxAllowedAirUtil()) {
+            LOG_INFO("sending telemetry to mesh");
             sendTelemetry();
             lastSentToMesh = millis();
         } else if (service->isToPhoneQueueEmpty()) {
+            LOG_INFO("sending telemetry to phone");
             // Just send to phone when it's not our time to send to mesh yet
             // Only send while queue is empty (phone assumed connected)
             sendTelemetry(NODENUM_BROADCAST, true);
