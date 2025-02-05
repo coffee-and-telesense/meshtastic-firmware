@@ -12,6 +12,7 @@
 #include "Router.h"
 #include "detect/ScanI2CTwoWire.h"
 #include "main.h"
+#include "power.h"
 #include <Throttle.h>
 
 int32_t AirQualityTelemetryModule::runOnce()
@@ -34,6 +35,9 @@ int32_t AirQualityTelemetryModule::runOnce()
 
         if (moduleConfig.telemetry.air_quality_enabled) {
             LOG_INFO("Air quality Telemetry: init");
+            if (scd30Sensor.isRunning()) {
+                return 1000;
+            }
             if (!aqi.begin_I2C()) {
 #ifndef I2C_NO_RESCAN
                 LOG_WARN("Could not establish i2c connection to AQI sensor. Rescan");
@@ -106,20 +110,34 @@ bool AirQualityTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPack
 
 bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 {
+    bool valid = false;
+
     if (!aqi.read(&data)) {
         LOG_WARN("Skip send measurements. Could not read AQIn");
+        valid = false;
+    } else {
+        m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
+        m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
+        m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
+        m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
+
+        m->variant.air_quality_metrics.pm10_environmental = data.pm10_env;
+        m->variant.air_quality_metrics.pm25_environmental = data.pm25_env;
+        m->variant.air_quality_metrics.pm100_environmental = data.pm100_env;
+    }
+
+    if (scd30Sensor.hasSensor()) {
+        LOG_INFO("Try reading from the SCD30...");
+        valid = scd30Sensor.getMetrics(m);
+        LOG_INFO("SCD30 reports: %d ppm", m->variant.air_quality_metrics.co2);
+    }
+
+    if (!valid) {
+        LOG_INFO("Could not read from SCD30 :(");
         return false;
     }
 
     m->time = getTime();
-    m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
-    m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
-    m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
-    m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
-
-    m->variant.air_quality_metrics.pm10_environmental = data.pm10_env;
-    m->variant.air_quality_metrics.pm25_environmental = data.pm25_env;
-    m->variant.air_quality_metrics.pm100_environmental = data.pm100_env;
 
     LOG_INFO("Send: PM1.0(Standard)=%i, PM2.5(Standard)=%i, PM10.0(Standard)=%i", m->variant.air_quality_metrics.pm10_standard,
              m->variant.air_quality_metrics.pm25_standard, m->variant.air_quality_metrics.pm100_standard);
@@ -127,6 +145,8 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
     LOG_INFO("         | PM1.0(Environmental)=%i, PM2.5(Environmental)=%i, PM10.0(Environmental)=%i",
              m->variant.air_quality_metrics.pm10_environmental, m->variant.air_quality_metrics.pm25_environmental,
              m->variant.air_quality_metrics.pm100_environmental);
+
+    LOG_INFO("CO2=%d", m->variant.air_quality_metrics.co2);
 
     return true;
 }
