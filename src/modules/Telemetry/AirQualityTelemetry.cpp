@@ -83,7 +83,7 @@ int32_t AirQualityTelemetryModule::runOnce()
 //                 return disable();
 //             }
 //             return 1000;
-}
+} 
         return disable();
     } else {
         // if we somehow got to a second run of this module with measurement disabled, then just wait forever
