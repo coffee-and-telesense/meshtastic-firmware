@@ -35,7 +35,7 @@ int32_t AirQualityTelemetryModule::runOnce()
 
         if (moduleConfig.telemetry.air_quality_enabled) {
             LOG_INFO("Air quality Telemetry: init");
-            if (scd30Sensor.isRunning()) {
+            if (scd30Sensor.hasSensor()) {
                 return 1000;
             }
             if (!aqi.begin_I2C()) {
@@ -115,12 +115,12 @@ bool AirQualityTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPack
 bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 {
     bool valid = false;
+    m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
 
     if (!aqi.read(&data)) {
         LOG_WARN("Skip send measurements. Could not read AQIn");
         valid = false;
     } else {
-        m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
         m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
         m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
         m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
