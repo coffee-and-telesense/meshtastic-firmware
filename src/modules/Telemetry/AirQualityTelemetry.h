@@ -7,6 +7,7 @@
 #include "Adafruit_PM25AQI.h"
 #include "NodeDB.h"
 #include "ProtobufModule.h"
+// #include "main.h"
 
 class AirQualityTelemetryModule : private concurrency::OSThread, public ProtobufModule<meshtastic_Telemetry>
 {
