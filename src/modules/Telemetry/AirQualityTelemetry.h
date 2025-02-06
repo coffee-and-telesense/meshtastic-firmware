@@ -5,7 +5,6 @@
 #pragma once
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "Adafruit_PM25AQI.h"
-#include "Sensor/SCD30Sensor.h"
 #include "NodeDB.h"
 #include "ProtobufModule.h"
 
@@ -24,7 +23,7 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
         setIntervalFromNow(10 * 1000);
         aqi = Adafruit_PM25AQI();
         // SCD30Sensor scd30; // is this really where this should go
-        scd30 = Adafruit_SCD30();
+        // scd30 = Adafruit_SCD30();
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
     }
     // int32_t ShareSensor(TelemetrySensor &sensor);
@@ -49,7 +48,7 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
   private:
     Adafruit_PM25AQI aqi;
     PM25_AQI_Data data = {0};
-    Adafruit_SCD30 scd30;
+    // Adafruit_SCD30 scd30;
     // SCD30Sensor scd30;
 
     bool firstTime = true;

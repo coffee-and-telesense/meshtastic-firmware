@@ -141,16 +141,7 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
     m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
     m->variant.air_quality_metrics = meshtastic_AirQualityMetrics_init_zero;
 
-
-    if (!scd30.dataReady())
-    {
-      LOG_DEBUG("scd30 data not ready yet, delaying");
-      delay(500);
-    }
-    if (!scd30.read()) {
-      LOG_DEBUG("SCD30 read failed!");
-      return false;
-    }
+    scd30Sensor.getMetrics();
 
     m->variant.environment_metrics.has_temperature = true;
     m->variant.environment_metrics.has_relative_humidity = true;

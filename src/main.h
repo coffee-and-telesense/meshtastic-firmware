@@ -81,6 +81,11 @@ extern bool runASAP;
 
 extern bool pauseBluetoothLogging;
 
+#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+#include "modules/Telemetry/Sensor/SCD30Sensor.h"
+extern SCD30Sensor scd30Sensor;
+#endif
+
 void nrf52Setup(), esp32Setup(), nrf52Loop(), esp32Loop(), rp2040Setup(), clearBonds(), enterDfuMode();
 
 meshtastic_DeviceMetadata getDeviceMetadata();
