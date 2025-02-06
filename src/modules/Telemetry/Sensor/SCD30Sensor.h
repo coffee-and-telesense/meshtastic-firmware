@@ -10,7 +10,7 @@
 class SCD30Sensor : public TelemetrySensor
 {
   private:
-    Adafruit_SCD30 scd30;
+    Adafruit_SCD30 scd30 = Adafruit_SCD30();
     // AirQualityTelemetryModule *aq_telemetry_object; //does it get instatntiated or something or passed
 
   protected:
@@ -21,6 +21,7 @@ class SCD30Sensor : public TelemetrySensor
     SCD30Sensor();
     virtual int32_t runOnce() override;
     virtual bool getMetrics(meshtastic_Telemetry *measurement) override;
+    bool getSensorData();
 };
 
 #endif

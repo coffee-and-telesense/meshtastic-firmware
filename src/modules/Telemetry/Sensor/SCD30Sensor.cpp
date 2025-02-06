@@ -29,7 +29,8 @@ int32_t SCD30Sensor::runOnce()
   scd30.startContinuousMeasurement();
   LOG_INFO("SCD30 setup:");
   LOG_INFO("%f, seconds",scd30.getMeasurementInterval());
-  return 1;
+  // return 1;
+  return initI2CSensor();
 }
 
 void SCD30Sensor::setup() {
