@@ -23,6 +23,8 @@ int32_t SCD30Sensor::runOnce()
   delay(2000); // Wait 2 seconds for initialization and calibration
   status = scd30.getMeasurementInterval();
   LOG_INFO("Measurement interval of %d seconds", status);
+  // set scd30 co2 to -1 as hacky init
+  scd30.CO2 = INFINITY;
   return initI2CSensor();
 }
 
@@ -95,8 +97,8 @@ bool SCD30Sensor::getAirQualityMetrics(meshtastic_Telemetry *measurement)
       delay(500);
       return false;
   }
-  if (scd30.CO2 == 0) {
-    LOG_DEBUG("SCD30 reporting 0 ppm, probably not ready");
+  if (scd30.CO2 == INFINITY) {
+    LOG_DEBUG("SCD30 reporting infinity ppm, probably not ready");
     delay(500);
     return false;
   }
