@@ -4,7 +4,9 @@
 
 #pragma once
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
+#if USE_PM25AQI
 #include "Adafruit_PM25AQI.h"
+#endif
 #include "NodeDB.h"
 #include "ProtobufModule.h"
 
@@ -21,7 +23,9 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
     {
         lastMeasurementPacket = nullptr;
         setIntervalFromNow(10 * 1000);
-        // aqi = Adafruit_PM25AQI();
+        #if USE_PM25AQI
+        aqi = Adafruit_PM25AQI();
+        #endif
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
     }
 
@@ -42,8 +46,10 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
     bool sendTelemetry(NodeNum dest = NODENUM_BROADCAST, bool wantReplies = false);
 
   private:
-    // Adafruit_PM25AQI aqi;
-    // PM25_AQI_Data data = {0};
+  #if USE_PM25AQI
+    Adafruit_PM25AQI aqi;
+    PM25_AQI_Data data = {0};
+  #endif
     bool firstTime = true;
     meshtastic_MeshPacket *lastMeasurementPacket;
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute

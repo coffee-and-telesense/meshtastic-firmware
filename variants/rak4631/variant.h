@@ -21,6 +21,7 @@
 
 #define RAK4630
 #define USE_SCD30
+#define USE_PM25AQI 0 
 
 /** Master clock frequency */
 #define VARIANT_MCK (64000000ul)
