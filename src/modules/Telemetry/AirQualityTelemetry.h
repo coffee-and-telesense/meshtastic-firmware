@@ -21,7 +21,7 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
     {
         lastMeasurementPacket = nullptr;
         setIntervalFromNow(10 * 1000);
-        aqi = Adafruit_PM25AQI();
+        // aqi = Adafruit_PM25AQI();
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
     }
 
@@ -42,8 +42,8 @@ class AirQualityTelemetryModule : private concurrency::OSThread, public Protobuf
     bool sendTelemetry(NodeNum dest = NODENUM_BROADCAST, bool wantReplies = false);
 
   private:
-    Adafruit_PM25AQI aqi;
-    PM25_AQI_Data data = {0};
+    // Adafruit_PM25AQI aqi;
+    // PM25_AQI_Data data = {0};
     bool firstTime = true;
     meshtastic_MeshPacket *lastMeasurementPacket;
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute

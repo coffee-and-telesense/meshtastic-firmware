@@ -38,27 +38,27 @@ int32_t AirQualityTelemetryModule::runOnce()
             if (scd30Sensor.hasSensor()) {
                 return 1000;
             }
-            if (!aqi.begin_I2C()) {
-#ifndef I2C_NO_RESCAN
-                LOG_WARN("Could not establish i2c connection to AQI sensor. Rescan");
-                // rescan for late arriving sensors. AQI Module starts about 10 seconds into the boot so this is plenty.
-                uint8_t i2caddr_scan[] = {PMSA0031_ADDR};
-                uint8_t i2caddr_asize = 1;
-                auto i2cScanner = std::unique_ptr<ScanI2CTwoWire>(new ScanI2CTwoWire());
-#if defined(I2C_SDA1)
-                i2cScanner->scanPort(ScanI2C::I2CPort::WIRE1, i2caddr_scan, i2caddr_asize);
-#endif
-                i2cScanner->scanPort(ScanI2C::I2CPort::WIRE, i2caddr_scan, i2caddr_asize);
-                auto found = i2cScanner->find(ScanI2C::DeviceType::PMSA0031);
-                if (found.type != ScanI2C::DeviceType::NONE) {
-                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first = found.address.address;
-                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].second =
-                        i2cScanner->fetchI2CBus(found.address);
-                    return 1000;
-                }
-#endif
-                return disable();
-            }
+//             if (!aqi.begin_I2C()) {
+// #ifndef I2C_NO_RESCAN
+//                 LOG_WARN("Could not establish i2c connection to AQI sensor. Rescan");
+//                 // rescan for late arriving sensors. AQI Module starts about 10 seconds into the boot so this is plenty.
+//                 uint8_t i2caddr_scan[] = {PMSA0031_ADDR};
+//                 uint8_t i2caddr_asize = 1;
+//                 auto i2cScanner = std::unique_ptr<ScanI2CTwoWire>(new ScanI2CTwoWire());
+// #if defined(I2C_SDA1)
+//                 i2cScanner->scanPort(ScanI2C::I2CPort::WIRE1, i2caddr_scan, i2caddr_asize);
+// #endif
+//                 i2cScanner->scanPort(ScanI2C::I2CPort::WIRE, i2caddr_scan, i2caddr_asize);
+//                 auto found = i2cScanner->find(ScanI2C::DeviceType::PMSA0031);
+//                 if (found.type != ScanI2C::DeviceType::NONE) {
+//                     nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first = found.address.address;
+//                     nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].second =
+//                         i2cScanner->fetchI2CBus(found.address);
+//                     return 1000;
+//                 }
+// #endif
+//                 return disable();
+//             }
             return 1000;
         }
         return disable();
@@ -117,18 +117,18 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
     bool valid = false;
     m->which_variant = meshtastic_Telemetry_air_quality_metrics_tag;
 
-    if (!aqi.read(&data)) {
-        LOG_WARN("Skip send measurements. Could not read AQIn");
-        valid = false;
-    } else {
-        m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
-        m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
-        m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
+    // if (!aqi.read(&data)) {
+    //     LOG_WARN("Skip send measurements. Could not read AQIn");
+    //     valid = false;
+    // } else {
+    //     m->variant.air_quality_metrics.pm10_standard = data.pm10_standard;
+    //     m->variant.air_quality_metrics.pm25_standard = data.pm25_standard;
+    //     m->variant.air_quality_metrics.pm100_standard = data.pm100_standard;
 
-        m->variant.air_quality_metrics.pm10_environmental = data.pm10_env;
-        m->variant.air_quality_metrics.pm25_environmental = data.pm25_env;
-        m->variant.air_quality_metrics.pm100_environmental = data.pm100_env;
-    }
+    //     m->variant.air_quality_metrics.pm10_environmental = data.pm10_env;
+    //     m->variant.air_quality_metrics.pm25_environmental = data.pm25_env;
+    //     m->variant.air_quality_metrics.pm100_environmental = data.pm100_env;
+    // }
 
     if (scd30Sensor.hasSensor()) {
         LOG_INFO("Try reading from the SCD30...");
