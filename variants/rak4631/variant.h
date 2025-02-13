@@ -20,7 +20,7 @@
 #define _VARIANT_RAK4630_
 
 #define RAK4630
-#define USE_SCD30
+#define USE_SCD30 1
 #define USE_PM25AQI 0 
 
 /** Master clock frequency */

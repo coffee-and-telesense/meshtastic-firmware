@@ -12,7 +12,7 @@ SCD30Sensor::SCD30Sensor() : TelemetrySensor(meshtastic_TelemetrySensorType_SCD3
 
 int32_t SCD30Sensor::runOnce()
 {
-  LOG_INFO("SCD30 setup:");
+  LOG_INFO("SCD30 runeOnce start:");
   if(!scd30.begin())
   {
     scd30.begin();

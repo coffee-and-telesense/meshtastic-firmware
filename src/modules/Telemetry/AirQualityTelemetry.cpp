@@ -34,26 +34,31 @@ int32_t AirQualityTelemetryModule::runOnce()
         firstTime = false;
 
         if (moduleConfig.telemetry.air_quality_enabled) {
-            LOG_INFO("Air quality Telemetry: init");
+            LOG_INFO("Air quality Telemetry enabled");
+#if USE_SCD30
             if (scd30Sensor.hasSensor()) {
+                LOG_INFO("scd30 has sensor run successfully");
+                scd30Sensor.runOnce();
                 return 1000;
             }
+#endif
 #if USE_PM25AQI
             if (!aqi.begin_I2C()) {
 #ifndef I2C_NO_RESCAN
                 LOG_WARN("Could not establish i2c connection to AQI sensor. Rescan");
                 // rescan for late arriving sensors. AQI Module starts about 10 seconds into the boot so this is plenty.
-                uint8_t i2caddr_scan[] = {PMSA0031_ADDR};
+
+                uint8_t i2caddr_scan[] = {PMSA0031_ADDR}; //interpolate 
                 uint8_t i2caddr_asize = 1;
                 auto i2cScanner = std::unique_ptr<ScanI2CTwoWire>(new ScanI2CTwoWire());
 #if defined(I2C_SDA1)
                 i2cScanner->scanPort(ScanI2C::I2CPort::WIRE1, i2caddr_scan, i2caddr_asize);
 #endif
                 i2cScanner->scanPort(ScanI2C::I2CPort::WIRE, i2caddr_scan, i2caddr_asize);
-                auto found = i2cScanner->find(ScanI2C::DeviceType::PMSA0031);
+                auto found = i2cScanner->find(ScanI2C::DeviceType::PMSA0031); //interpoablet
                 if (found.type != ScanI2C::DeviceType::NONE) {
-                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first = found.address.address;
-                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].second =
+                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first = found.address.address; //interpotlate
+                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].second = //interpotlate
                         i2cScanner->fetchI2CBus(found.address);
                     return 1000;
                 }
