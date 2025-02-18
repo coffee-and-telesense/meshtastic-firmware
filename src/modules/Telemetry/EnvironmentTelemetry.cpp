@@ -393,6 +393,26 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         hasSensor = true;
     }
     if (scd30Sensor.hasSensor()) {
+        if(bme680Sensor.hasSensor())
+        {
+        //bme680 outputs:
+                // temp
+                // humidity
+                // barometric pressure
+                // gas resistance
+        //scd30 outputs:
+            // humidity
+            // temp
+        
+        //prefer scd30 temp, humidity if both sensors are present, fetch only humidity and temp
+        meshtastic_Telemetry m_scd30 = meshtastic_Telemetry_init_zero;
+        scd30Sensor.getMetrics(&m_scd30);
+        m->variant.environment_metrics.relative_humidity = m_scd30.variant.environment_metrics.relative_humidity;       
+        m->variant.environment_metrics.has_relative_humidity = m_scd30.variant.environment_metrics.has_relative_humidity;
+
+        m->variant.environment_metrics.has_temperature = m_scd30.variant.environment_metrics.has_temperature;
+        m->variant.environment_metrics.temperature = m_scd30.variant.environment_metrics.temperature;
+        }
         valid = valid && scd30Sensor.getMetrics(m);
         hasSensor = true;
     }
