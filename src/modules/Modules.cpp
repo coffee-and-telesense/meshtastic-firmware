@@ -192,7 +192,9 @@ void setupModules()
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
         new EnvironmentTelemetryModule();
-        new AirQualityTelemetryModule(); // scd30 test, probably should have a check like below
+        if(nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_SCD30].first > 0) {
+                new AirQualityTelemetryModule(); // scd30 test, probably should have a check like below
+        }
         if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first > 0) {
             new AirQualityTelemetryModule();
         }

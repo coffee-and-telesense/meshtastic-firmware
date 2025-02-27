@@ -61,6 +61,7 @@ bool BME680Sensor::getMetrics(meshtastic_Telemetry *measurement)
     measurement->variant.environment_metrics.has_gas_resistance = true;
     measurement->variant.environment_metrics.has_iaq = true;
 
+    //doies this stuff need requrieiost stuff before or after touching is there an flag to touch
     measurement->variant.environment_metrics.temperature = bme680.getData(BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE).signal;
     measurement->variant.environment_metrics.relative_humidity =
         bme680.getData(BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY).signal;

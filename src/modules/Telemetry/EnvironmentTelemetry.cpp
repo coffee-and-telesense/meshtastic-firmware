@@ -157,6 +157,7 @@ int32_t EnvironmentTelemetryModule::runOnce()
         if (!moduleConfig.telemetry.environment_measurement_enabled) {
             return disable();
         } else {
+            LOG_DEBUG("GOT TO THE SECOND RUN ELSE");
             if (bme680Sensor.hasSensor())
                 result = bme680Sensor.runTrigger();
         }
