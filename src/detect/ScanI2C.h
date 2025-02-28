@@ -10,7 +10,8 @@ class ScanI2C
         NONE,
         SCREEN_SSD1306,
         SCREEN_SH1106,
-        SCREEN_UNKNOWN, // has the same address as the two above but does not respond to the same commands
+        SCREEN_UNKNOWN, // has the same address as the two above but does not
+                        // respond to the same commands
         SCREEN_ST7567,
         RTC_RV3028,
         RTC_PCF8563,
@@ -67,6 +68,7 @@ class ScanI2C
         INA226,
         NXP_SE050,
         DFROBOT_RAIN,
+        SCD30,
     } DeviceType;
 
     // typedef uint8_t DeviceAddress;
@@ -107,7 +109,8 @@ class ScanI2C
     virtual void scanPort(ScanI2C::I2CPort, uint8_t *, uint8_t);
 
     /*
-     * A bit of a hack, this tells the scanner not to tell later systems there is a screen to avoid enabling it.
+     * A bit of a hack, this tells the scanner not to tell later systems there is
+     * a screen to avoid enabling it.
      */
     void setSuppressScreen();
 
