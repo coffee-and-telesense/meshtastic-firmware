@@ -1,4 +1,5 @@
 #include "ScanI2CTwoWire.h"
+#include "ScanI2C.h"
 
 #if !MESHTASTIC_EXCLUDE_I2C
 
@@ -442,6 +443,14 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
                 } else {
                     type = MPU6050;
                     logFoundDevice("MPU6050", (uint8_t)addr.address);
+                    break;
+                }
+                break;
+
+            case SCD30:
+                if (addr.address == SCD30_ADDR) {
+                    type = SCD30;
+                    LOG_INFO("SCD30 CO2 sensor found");
                     break;
                 }
                 break;
