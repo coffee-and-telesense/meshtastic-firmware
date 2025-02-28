@@ -37,13 +37,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Version
 // -----------------------------------------------------------------------------
 
-// If app version is not specified we assume we are not being invoked by the build script
+// If app version is not specified we assume we are not being invoked by the
+// build script
 #ifndef APP_VERSION
 #error APP_VERSION must be set by the build environment
 #endif
 
-// FIXME: This is still needed by the Bluetooth Stack and needs to be replaced by something better. Remnant of the old versioning
-// system.
+// FIXME: This is still needed by the Bluetooth Stack and needs to be replaced
+// by something better. Remnant of the old versioning system.
 #ifndef HW_VERSION
 #define HW_VERSION "1.0"
 #endif
@@ -56,7 +57,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define xstr(s) ystr(s)
 #define ystr(s) #s
 
-/// Convert a preprocessor name into a quoted string and if that string is empty use "unset"
+/// Convert a preprocessor name into a quoted string and if that string is empty
+/// use "unset"
 #define optstr(s) (xstr(s)[0] ? xstr(s) : "unset")
 
 // Nop definition for these attributes that are specific to ESP32
@@ -78,10 +80,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // -----------------------------------------------------------------------------
 
 // Override user saved region, for producing region-locked builds
-// #define REGULATORY_LORA_REGIONCODE meshtastic_Config_LoRaConfig_RegionCode_SG_923
+// #define REGULATORY_LORA_REGIONCODE
+// meshtastic_Config_LoRaConfig_RegionCode_SG_923
 
-// Total system gain in dBm to subtract from Tx power to remain within regulatory ERP limit for non-licensed operators
-// This value should be set in variant.h and is PA gain + antenna gain (if system ships with an antenna)
+// Total system gain in dBm to subtract from Tx power to remain within
+// regulatory ERP limit for non-licensed operators This value should be set in
+// variant.h and is PA gain + antenna gain (if system ships with an antenna)
 #ifndef REGULATORY_GAIN_LORA
 #define REGULATORY_GAIN_LORA 0
 #endif
@@ -104,8 +108,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ST7567_ADDRESS 0x3F
 
 // The SH1106 controller is almost, but not quite, the same as SSD1306
-// Define this if you know you have that controller or your "SSD1306" misbehaves.
-// #define USE_SH1106
+// Define this if you know you have that controller or your "SSD1306"
+// misbehaves. #define USE_SH1106
 
 // Define if screen should be mirrored left to right
 // #define SCREEN_MIRROR
@@ -150,6 +154,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAX30102_ADDR 0x57
 #define MLX90614_ADDR_DEF 0x5A
 #define CGRADSENS_ADDR 0x66
+#define SCD30_ADDR 0x61
 
 // -----------------------------------------------------------------------------
 // ACCELEROMETER
@@ -196,7 +201,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "variant.h"
 
 #if defined(VEXT_ENABLE) && !defined(VEXT_ON_VALUE)
-// Older variant.h files might not be defining this value, so stay with the old default
+// Older variant.h files might not be defining this value, so stay with the old
+// default
 #define VEXT_ON_VALUE LOW
 #endif
 
@@ -241,7 +247,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #endif
 
-/* Step #3: mop up with disabled values for HAS_ options not handled by the above two */
+/* Step #3: mop up with disabled values for HAS_ options not handled by the
+ * above two */
 
 #ifndef HAS_WIFI
 #define HAS_WIFI 0
@@ -336,14 +343,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MESHTASTIC_EXCLUDE_ADMIN 1
 #endif
 
-// // Turn off wifi even if HW supports wifi (webserver relies on wifi and is also disabled)
+// // Turn off wifi even if HW supports wifi (webserver relies on wifi and is
+// also disabled)
 #ifdef MESHTASTIC_EXCLUDE_WIFI
 #define MESHTASTIC_EXCLUDE_WEBSERVER 1
 #undef HAS_WIFI
 #define HAS_WIFI 0
 #endif
 
-// Allow code that needs internet to just check HAS_NETWORKING rather than HAS_WIFI || HAS_ETHERNET
+// Allow code that needs internet to just check HAS_NETWORKING rather than
+// HAS_WIFI || HAS_ETHERNET
 #define HAS_NETWORKING (HAS_WIFI || HAS_ETHERNET)
 
 // // Turn off Bluetooth
