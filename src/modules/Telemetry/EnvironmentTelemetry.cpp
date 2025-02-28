@@ -35,7 +35,7 @@
 #include "Sensor/NAU7802Sensor.h"
 #include "Sensor/OPT3001Sensor.h"
 #include "Sensor/RCWL9620Sensor.h"
-#include "Sensor/SCD30.h"
+#include "Sensor/SCD30Sensor.h"
 #include "Sensor/SHT31Sensor.h"
 #include "Sensor/SHT4XSensor.h"
 #include "Sensor/SHTC3Sensor.h"
@@ -63,6 +63,7 @@ NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
 SCD30Sensor scd30Sensor;
+
 #endif
 #ifdef T1000X_SENSOR_EN
 #include "Sensor/T1000xSensor.h"
