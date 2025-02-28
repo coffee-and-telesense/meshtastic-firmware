@@ -35,6 +35,7 @@
 #include "Sensor/NAU7802Sensor.h"
 #include "Sensor/OPT3001Sensor.h"
 #include "Sensor/RCWL9620Sensor.h"
+#include "Sensor/SCD30.h"
 #include "Sensor/SHT31Sensor.h"
 #include "Sensor/SHT4XSensor.h"
 #include "Sensor/SHTC3Sensor.h"
@@ -61,6 +62,7 @@ DFRobotGravitySensor dfRobotGravitySensor;
 NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
+SCD30Sensor scd30Sensor;
 #endif
 #ifdef T1000X_SENSOR_EN
 #include "Sensor/T1000xSensor.h"
@@ -163,6 +165,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 result = max17048Sensor.runOnce();
             if (cgRadSens.hasSensor())
                 result = cgRadSens.runOnce();
+            if (scd30Sensor.hasSensor())
+                result = scd30Sensor.runOnce();
                 // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
                 // sensormap here.
 #ifdef HAS_RAKPROT
@@ -486,6 +490,10 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         valid = valid && cgRadSens.getMetrics(m);
         hasSensor = true;
     }
+    if (scd30Sensor.hasSensor()) {
+        valid = valid && scd30Sensor.getMetrics(m);
+        hasSensor = true;
+    }
 #ifdef HAS_RAKPROT
     valid = valid && rak9154Sensor.getMetrics(m);
     hasSensor = true;
@@ -694,6 +702,11 @@ AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule
     }
     if (cgRadSens.hasSensor()) {
         result = cgRadSens.handleAdminMessage(mp, request, response);
+        if (result != AdminMessageHandleResult::NOT_HANDLED)
+            return result;
+    }
+    if (scd30Sensor.hasSensor()) {
+        result = scd30Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
