@@ -67,7 +67,7 @@ CGRadSensSensor cgRadSens;
 SCD30Sensor scd30Sensor;
 #else
 #include "SharedSensors.h"
-#end
+#endif
 
 #endif
 #ifdef T1000X_SENSOR_EN
