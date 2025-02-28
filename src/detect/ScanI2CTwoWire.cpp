@@ -447,7 +447,7 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
                 }
                 break;
 
-            case SCD30:
+            case SCD30_ADDR:
                 if (addr.address == SCD30_ADDR) {
                     type = SCD30;
                     LOG_INFO("SCD30 CO2 sensor found");
