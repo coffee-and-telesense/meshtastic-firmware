@@ -12,6 +12,11 @@
 // txd = 8
 // rxd = 9
 
+// Yes, we are using the SCD30 for both Air Quality and Environment Metrics
+#define SHARING_SENSORS 1
+#define USE_SCD30 1
+#define USE_PM25AQI 0
+
 #define EXT_NOTIFY_OUT 22
 #define BUTTON_PIN 17
 

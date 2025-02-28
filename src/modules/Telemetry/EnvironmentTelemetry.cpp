@@ -35,7 +35,6 @@
 #include "Sensor/NAU7802Sensor.h"
 #include "Sensor/OPT3001Sensor.h"
 #include "Sensor/RCWL9620Sensor.h"
-#include "Sensor/SCD30Sensor.h"
 #include "Sensor/SHT31Sensor.h"
 #include "Sensor/SHT4XSensor.h"
 #include "Sensor/SHTC3Sensor.h"
@@ -62,7 +61,13 @@ DFRobotGravitySensor dfRobotGravitySensor;
 NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
+
+#if !SHARING_SENSORS
+#include "Sensor/SCD30Sensor.h"
 SCD30Sensor scd30Sensor;
+#else
+#include "SharedSensors.h"
+#end
 
 #endif
 #ifdef T1000X_SENSOR_EN
