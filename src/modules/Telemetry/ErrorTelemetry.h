@@ -88,6 +88,11 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t lastSentStatsToPhone = 0;
     uint32_t lastSentToMesh = 0;
 
+    uint32_t usefulCount = 0;
+    uint32_t collisionCount = 0;
+    uint32_t sensedCount = 0;
+    uint32_t receivedCount = 0;
+
     void refreshUptime()
     {
         auto now = millis();
