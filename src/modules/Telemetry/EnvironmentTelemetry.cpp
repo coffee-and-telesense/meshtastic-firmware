@@ -62,11 +62,11 @@ NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
 
-#if !SHARING_SENSORS
+#if !SHARING_SENSORS && USE_SCD30
 #include "Sensor/SCD30Sensor.h"
 SCD30Sensor scd30Sensor;
 #else
-#include "SharedSensors.h"
+#include "Sensor/SharedSensors.h"
 #endif
 
 #endif

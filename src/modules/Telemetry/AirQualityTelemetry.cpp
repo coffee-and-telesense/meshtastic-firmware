@@ -18,7 +18,7 @@
 #include "Sensor/SCD30Sensor.h"
 SCD30Sensor scd30Sensor;
 #else
-#include "SharedSensors.h"
+#include "Sensor/SharedSensors.h"
 #endif
 
 int32_t AirQualityTelemetryModule::runOnce()

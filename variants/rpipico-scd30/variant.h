@@ -12,6 +12,8 @@
 // txd = 8
 // rxd = 9
 
+#undef MESHTASTIC_MINIMIZE_BUILD
+
 // Yes, we are using the SCD30 for both Air Quality and Environment Metrics
 #define SHARING_SENSORS 1
 #define USE_SCD30 1
@@ -27,7 +29,6 @@
 #define ADC_MULTIPLIER 3.1 // 3.0 + a bit for being optimistic
 #define BATTERY_SENSE_RESOLUTION_BITS ADC_RESOLUTION
 
-#define USE_SCD30
 #define USE_SX1262
 
 #undef LORA_SCK
