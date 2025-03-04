@@ -83,7 +83,8 @@ typedef enum _meshtastic_TelemetrySensorType {
     /* High accuracy current and voltage */
     meshtastic_TelemetrySensorType_INA226 = 34,
     /* DFRobot Gravity tipping bucket rain gauge */
-    meshtastic_TelemetrySensorType_DFROBOT_RAIN = 35
+    meshtastic_TelemetrySensorType_DFROBOT_RAIN = 35,
+    meshtastic_TelemetrySensorType_BME688 = 36
 } meshtastic_TelemetrySensorType;
 
 /* Struct definitions */

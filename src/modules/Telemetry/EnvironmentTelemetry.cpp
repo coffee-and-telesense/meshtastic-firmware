@@ -40,6 +40,7 @@
 #include "Sensor/SHTC3Sensor.h"
 #include "Sensor/TSL2591Sensor.h"
 #include "Sensor/VEML7700Sensor.h"
+#include "Sensor/BME688Sensor.h"
 
 BMP085Sensor bmp085Sensor;
 BMP280Sensor bmp280Sensor;
@@ -61,6 +62,8 @@ DFRobotGravitySensor dfRobotGravitySensor;
 NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
+BME688Sensor bme680Sensor;
+
 #endif
 #ifdef T1000X_SENSOR_EN
 #include "Sensor/T1000xSensor.h"
@@ -163,6 +166,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 result = max17048Sensor.runOnce();
             if (cgRadSens.hasSensor())
                 result = cgRadSens.runOnce();
+            if (BME688Sensor.hasSensor())
+                result = BME688Sensor.runOnce();
                 // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
                 // sensormap here.
 #ifdef HAS_RAKPROT
@@ -178,8 +183,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
             return disable();
         } else {
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
-            if (bme680Sensor.hasSensor())
-                result = bme680Sensor.runTrigger();
+            // if (bme680Sensor.hasSensor())
+            //     result = bme680Sensor.runTrigger();
 #endif
         }
 
@@ -484,6 +489,10 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     }
     if (cgRadSens.hasSensor()) {
         valid = valid && cgRadSens.getMetrics(m);
+        hasSensor = true;
+    }
+    if(BME688Sensor.hasSensor()) {
+        valid = valid && BME688Sensor.getMetrics(m);
         hasSensor = true;
     }
 #ifdef HAS_RAKPROT

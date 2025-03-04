@@ -226,8 +226,8 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
                 registerValue = getRegisterValue(ScanI2CTwoWire::RegisterLocation(addr, 0xD0), 1); // GET_ID
                 switch (registerValue) {
                 case 0x61:
-                    logFoundDevice("BME680", (uint8_t)addr.address);
-                    type = BME_680;
+                    logFoundDevice("BME688", (uint8_t)addr.address);
+                    type = BME_688;
                     break;
                 case 0x60:
                     logFoundDevice("BME280", (uint8_t)addr.address);
