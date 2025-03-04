@@ -27,6 +27,7 @@
 #define ADC_MULTIPLIER 3.1 // 3.0 + a bit for being optimistic
 #define BATTERY_SENSE_RESOLUTION_BITS ADC_RESOLUTION
 
+#define USE_SCD30
 #define USE_SX1262
 
 #undef LORA_SCK
@@ -52,4 +53,9 @@
 #define SX126X_RESET LORA_RESET
 #define SX126X_DIO2_AS_RF_SWITCH
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
+#endif
+
+#ifdef USE_SCD30
+#define I2C_SDA 4
+#define I2C_SCL 5
 #endif
