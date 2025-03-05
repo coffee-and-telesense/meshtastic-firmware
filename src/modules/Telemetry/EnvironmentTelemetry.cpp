@@ -563,7 +563,7 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     if (t1000xSensor.getMetrics(&m)) {
 #else
 #if (SENSOR_COUNT > 1)
-    u8_t count = 0;
+    uint8_t count = 0;
     while (count < SENSOR_COUNT) {
 #endif
         if (getEnvironmentTelemetry(&m)) {

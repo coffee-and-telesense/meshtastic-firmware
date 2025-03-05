@@ -55,6 +55,8 @@ extern "C" {
 
 #define LED_STATE_ON 1 // State when LED is litted
 
+// Sens
+
 /*
  * Buttons
  */
@@ -198,6 +200,11 @@ SO GPIO 39/TXEN MAY NOT BE DEFINED FOR SUCCESSFUL OPERATION OF THE SX1262 - TG
 */
 
 #define DETECTION_SENSOR_EN 4
+
+#define SHARING_SENSORS 1
+#define SENSOR_COUNT 1
+#define USE_SCD30 1
+#define USE_PM25AQI 0
 
 #define USE_SX1262
 #define SX126X_CS (42)
