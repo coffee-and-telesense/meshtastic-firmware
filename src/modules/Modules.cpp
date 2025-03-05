@@ -56,9 +56,6 @@
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
 #include "main.h"
-#if SHARING_SENSORS
-#include "modules/Telemetry/SharedSensors.h"
-#endif
 #include "modules/Telemetry/AirQualityTelemetry.h"
 #include "modules/Telemetry/EnvironmentTelemetry.h"
 #include "modules/Telemetry/HealthTelemetry.h"
