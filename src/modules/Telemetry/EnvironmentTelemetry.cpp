@@ -199,8 +199,14 @@ int32_t EnvironmentTelemetryModule::runOnce()
                                                                default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
             airTime->isTxAllowedChannelUtil(config.device.role != meshtastic_Config_DeviceConfig_Role_SENSOR) &&
             airTime->isTxAllowedAirUtil()) {
+#if (SENSOR_COUNT > 1)
+            for (uint8_t i = 0; i < SENSOR_COUNT; i++)
+                sendTelemetry();
+            lastSentToMesh = millis();
+#else
             sendTelemetry();
             lastSentToMesh = millis();
+#endif
         } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
             // Just send to phone when it's not our time to send to mesh yet
@@ -562,11 +568,7 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 #ifdef T1000X_SENSOR_EN
     if (t1000xSensor.getMetrics(&m)) {
 #else
-#if (SENSOR_COUNT > 1)
-    uint8_t count = 0;
-    while (count < SENSOR_COUNT) {
-#endif
-        if (getEnvironmentTelemetry(&m)) {
+    if (getEnvironmentTelemetry(&m)) {
 #endif
         LOG_INFO("Send: barometric_pressure=%f, current=%f, gas_resistance=%f, relative_humidity=%f, temperature=%f",
                  m.variant.environment_metrics.barometric_pressure, m.variant.environment_metrics.current,
@@ -612,13 +614,7 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         }
         return true;
     }
-#if (SENSOR_COUNT > 1)
-    LOG_DEBUG("sensor count: %d", count);
-    // delay(1); // sleep 1ms?
-    count++;
-}
-#endif
-return false;
+    return false;
 }
 
 AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule(const meshtastic_MeshPacket &mp,
