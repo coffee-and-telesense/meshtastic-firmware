@@ -425,8 +425,17 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         hasSensor = true;
     }
     if (bme680Sensor.hasSensor()) {
-        valid = valid && bme680Sensor.getMetrics(m);
-        hasSensor = true;
+#if (SENSOR_COUNT > 1)
+        if (lastSensor != meshtastic_TelemetrySensorType_BME680) {
+#endif
+            valid = valid && bme680Sensor.getMetrics(m);
+            hasSensor = true;
+#if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_BME680;
+            lastSensor = meshtastic_TelemetrySensorType_BME680;
+            return valid && hasSensor;
+        }
+#endif
     }
     if (mcp9808Sensor.hasSensor()) {
         valid = valid && mcp9808Sensor.getMetrics(m);
@@ -497,8 +506,17 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         hasSensor = true;
     }
     if (scd30Sensor.hasSensor()) {
-        valid = valid && scd30Sensor.getMetrics(m);
-        hasSensor = true;
+#if (SENSOR_COUNT > 1)
+        if (lastSensor != meshtastic_TelemetrySensorType_SCD30) {
+#endif
+            valid = valid && scd30Sensor.getMetrics(m);
+            hasSensor = true;
+#if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
+            lastSensor = meshtastic_TelemetrySensorType_SCD30;
+            return valid && hasSensor;
+        }
+#endif
     }
 #ifdef HAS_RAKPROT
     valid = valid && rak9154Sensor.getMetrics(m);
@@ -544,7 +562,11 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 #ifdef T1000X_SENSOR_EN
     if (t1000xSensor.getMetrics(&m)) {
 #else
-    if (getEnvironmentTelemetry(&m)) {
+#if (SENSOR_COUNT > 1)
+    u8_t count = 0;
+    while (count < SENSOR_COUNT) {
+#endif
+        if (getEnvironmentTelemetry(&m)) {
 #endif
         LOG_INFO("Send: barometric_pressure=%f, current=%f, gas_resistance=%f, relative_humidity=%f, temperature=%f",
                  m.variant.environment_metrics.barometric_pressure, m.variant.environment_metrics.current,
@@ -557,6 +579,9 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
                  m.variant.environment_metrics.wind_direction, m.variant.environment_metrics.weight);
 
         LOG_INFO("Send: radiation=%fµR/h", m.variant.environment_metrics.radiation);
+#if (SENSOR_COUNT > 1)
+        LOG_INFO("Send: sensor=%d", m.variant.environment_metrics.sensor);
+#endif
 
         sensor_read_error_count = 0;
 
@@ -587,7 +612,13 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         }
         return true;
     }
-    return false;
+#if (SENSOR_COUNT > 1)
+    LOG_DEBUG("sensor count: %d", count);
+    // delay(1); // sleep 1ms?
+    count++;
+}
+#endif
+return false;
 }
 
 AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule(const meshtastic_MeshPacket &mp,

@@ -153,9 +153,7 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 
 #if USE_SCD30
     if (scd30Sensor.hasSensor()) {
-        LOG_INFO("Try reading from the SCD30...");
         valid = scd30Sensor.getMetrics(m);
-        LOG_INFO("SCD30 reports: %0.2f ppm", m->variant.air_quality_metrics.co2);
     }
 #endif
 

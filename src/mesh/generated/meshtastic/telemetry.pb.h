@@ -172,6 +172,8 @@ typedef struct _meshtastic_EnvironmentMetrics {
     /* Rainfall in the last 24 hours in mm */
     bool has_rainfall_24h;
     float rainfall_24h;
+    /* Which sensor is sending the data */
+    _meshtastic_TelemetrySensorType sensor;
 } meshtastic_EnvironmentMetrics;
 
 /* Power Metrics (voltage / current / etc) */

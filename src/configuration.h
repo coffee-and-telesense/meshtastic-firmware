@@ -298,6 +298,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SHARING_SENSORS
 #define SHARING_SENSORS 0
 #endif
+#ifndef SENSOR_COUNT
+#define SENSOR_COUNT 1
+#endif
 
 #ifndef HW_VENDOR
 #error HW_VENDOR must be defined
