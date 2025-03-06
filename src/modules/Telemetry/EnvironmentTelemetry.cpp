@@ -386,6 +386,11 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     m->which_variant = meshtastic_Telemetry_environment_metrics_tag;
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
+#if (SENSOR_COUNT > 1)
+    if (lastSensor >= SENSOR_COUNT)
+        lastSensor = 0;
+#endif
+
 #ifdef SENSECAP_INDICATOR
     valid = valid && indicatorSensor.getMetrics(m);
     hasSensor = true;
@@ -436,13 +441,13 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     }
     if (bme680Sensor.hasSensor()) {
 #if (SENSOR_COUNT > 1)
-        if (lastSensor != meshtastic_TelemetrySensorType_BME680) {
+        if (lastSensor < 1) {
 #endif
             valid = valid && bme680Sensor.getMetrics(m);
             hasSensor = true;
 #if (SENSOR_COUNT > 1)
             m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_BME680;
-            lastSensor = meshtastic_TelemetrySensorType_BME680;
+            lastSensor++;
             return valid && hasSensor;
         }
 #endif
@@ -517,26 +522,36 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     }
     if (scd30Sensor.hasSensor()) {
 #if (SENSOR_COUNT > 1)
-        if (lastSensor != meshtastic_TelemetrySensorType_SCD30) {
+        if (lastSensor < 2) {
 #endif
             valid = valid && scd30Sensor.getMetrics(m);
             hasSensor = true;
 #if (SENSOR_COUNT > 1)
             m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
-            lastSensor = meshtastic_TelemetrySensorType_SCD30;
+            lastSensor++;
             return valid && hasSensor;
         }
 #endif
     }
     if (as7265XSensor.hasSensor()) {
-        valid = valid && as7265XSensor.getMetrics(m);
-        hasSensor = true;
+#if (SENSOR_COUNT > 1)
+        if (lastSensor < 3) {
+#endif
+            valid = valid && as7265XSensor.getMetrics(m);
+            hasSensor = true;
+#if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_AS7265X;
+            lastSensor++;
+            return valid && hasSensor;
+        }
+#endif
     }
 #ifdef HAS_RAKPROT
     valid = valid && rak9154Sensor.getMetrics(m);
     hasSensor = true;
 #endif
 #endif
+
     return valid && hasSensor;
 }
 
@@ -589,12 +604,13 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
                  m.variant.environment_metrics.wind_direction, m.variant.environment_metrics.weight);
 
         LOG_INFO("Send: radiation=%fµR/h", m.variant.environment_metrics.radiation);
-#if (SENSOR_COUNT > 1)
-        LOG_INFO("Send: sensor=%d", m.variant.environment_metrics.sensor);
-#endif
 
         LOG_INFO("Send: lux=%f, ir_lux=%f, uv_lux=%f", m.variant.environment_metrics.lux, m.variant.environment_metrics.ir_lux,
                  m.variant.environment_metrics.ir_lux);
+
+#if (SENSOR_COUNT > 1)
+        LOG_INFO("Send: sensor=%d", m.variant.environment_metrics.sensor);
+#endif
 
         sensor_read_error_count = 0;
 

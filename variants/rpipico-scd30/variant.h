@@ -16,7 +16,7 @@
 
 // Yes, we are using the SCD30 for both Air Quality and Environment Metrics
 #define SHARING_SENSORS 1
-#define SENSOR_COUNT 2
+#define SENSOR_COUNT 3
 #define USE_SCD30 1
 #define USE_PM25AQI 0
 

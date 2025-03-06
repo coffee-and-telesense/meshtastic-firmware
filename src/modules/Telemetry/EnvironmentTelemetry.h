@@ -58,7 +58,7 @@ class EnvironmentTelemetryModule : private concurrency::OSThread, public Protobu
     bool firstTime = 1;
     meshtastic_MeshPacket *lastMeasurementPacket;
 #if (SENSOR_COUNT > 1)
-    _meshtastic_TelemetrySensorType lastSensor;
+    uint8_t lastSensor;
 #endif
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute
     uint32_t lastSentToMesh = 0;
