@@ -21,6 +21,7 @@
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
 // Sensors
 #include "Sensor/AHT10.h"
+#include "Sensor/AS7265xSensor.h"
 #include "Sensor/BME280Sensor.h"
 #include "Sensor/BME680Sensor.h"
 #include "Sensor/BMP085Sensor.h"
@@ -61,6 +62,7 @@ DFRobotGravitySensor dfRobotGravitySensor;
 NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
+AS7265XSensor as7265XSensor;
 
 #if !SHARING_SENSORS && USE_SCD30
 #include "Sensor/SCD30Sensor.h"
@@ -173,6 +175,8 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 result = cgRadSens.runOnce();
             if (scd30Sensor.hasSensor())
                 result = scd30Sensor.runOnce();
+            if (as7265XSensor.hasSensor())
+                result = as7265XSensor.runOnce();
                 // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
                 // sensormap here.
 #ifdef HAS_RAKPROT
@@ -524,6 +528,10 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         }
 #endif
     }
+    if (as7265XSensor.hasSensor()) {
+        valid = valid && as7265XSensor.getMetrics(m);
+        hasSensor = true;
+    }
 #ifdef HAS_RAKPROT
     valid = valid && rak9154Sensor.getMetrics(m);
     hasSensor = true;
@@ -584,6 +592,9 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 #if (SENSOR_COUNT > 1)
         LOG_INFO("Send: sensor=%d", m.variant.environment_metrics.sensor);
 #endif
+
+        LOG_INFO("Send: lux=%f, ir_lux=%f, uv_lux=%f", m.variant.environment_metrics.lux, m.variant.environment_metrics.ir_lux,
+                 m.variant.environment_metrics.ir_lux);
 
         sensor_read_error_count = 0;
 
@@ -742,6 +753,9 @@ AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule
         result = scd30Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
+    }
+    if (as7265XSensor.hasSensor()) {
+        // TODO
     }
 #endif
     return result;

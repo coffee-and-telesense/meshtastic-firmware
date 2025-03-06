@@ -69,6 +69,7 @@ class ScanI2C
         NXP_SE050,
         DFROBOT_RAIN,
         SCD30,
+        AS7265X,
     } DeviceType;
 
     // typedef uint8_t DeviceAddress;

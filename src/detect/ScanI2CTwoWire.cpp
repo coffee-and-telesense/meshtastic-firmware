@@ -1,5 +1,7 @@
 #include "ScanI2CTwoWire.h"
 #include "ScanI2C.h"
+#include "configuration.h"
+#include <cstdint>
 
 #if !MESHTASTIC_EXCLUDE_I2C
 
@@ -415,6 +417,7 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
                 SCAN_SIMPLE_CASE(MAX1704X_ADDR, MAX17048, "MAX17048", (uint8_t)addr.address);
                 SCAN_SIMPLE_CASE(DFROBOT_RAIN_ADDR, DFROBOT_RAIN, "DFRobot Rain Gauge", (uint8_t)addr.address);
                 SCAN_SIMPLE_CASE(SCD30_ADDR, SCD30, "SCD30", (uint8_t)addr.address);
+                SCAN_SIMPLE_CASE(AS7265X_ADDR, AS7265X, "AS7265X", (uint8_t)addr.address);
 #ifdef HAS_TPS65233
                 SCAN_SIMPLE_CASE(TPS65233_ADDR, TPS65233, "TPS65233", (uint8_t)addr.address);
 #endif
