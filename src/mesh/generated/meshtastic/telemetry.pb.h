@@ -42,7 +42,8 @@ typedef enum _meshtastic_TelemetrySensorType {
     meshtastic_TelemetrySensorType_PMSA003I = 13,
     /* INA3221 3 Channel Voltage / Current Sensor */
     meshtastic_TelemetrySensorType_INA3221 = 14,
-    /* BMP085/BMP180 High accuracy temperature and pressure (older Version of BMP280) */
+    /* BMP085/BMP180 High accuracy temperature and pressure (older Version of
+ BMP280) */
     meshtastic_TelemetrySensorType_BMP085 = 15,
     /* RCWL-9620 Doppler Radar Distance Sensor, used for water level detection */
     meshtastic_TelemetrySensorType_RCWL9620 = 16,
@@ -60,7 +61,8 @@ typedef enum _meshtastic_TelemetrySensorType {
     meshtastic_TelemetrySensorType_TSL25911FN = 22,
     /* AHT10 Integrated temperature and humidity sensor */
     meshtastic_TelemetrySensorType_AHT10 = 23,
-    /* DFRobot Lark Weather station (temperature, humidity, pressure, wind speed and direction) */
+    /* DFRobot Lark Weather station (temperature, humidity, pressure, wind speed
+ and direction) */
     meshtastic_TelemetrySensorType_DFROBOT_LARK = 24,
     /* NAU7802 Scale Chip or compatible */
     meshtastic_TelemetrySensorType_NAU7802 = 25,
@@ -70,7 +72,8 @@ typedef enum _meshtastic_TelemetrySensorType {
     meshtastic_TelemetrySensorType_ICM20948 = 27,
     /* MAX17048 1S lipo battery sensor (voltage, state of charge, time to go) */
     meshtastic_TelemetrySensorType_MAX17048 = 28,
-    /* Custom I2C sensor implementation based on https://github.com/meshtastic/i2c-sensor */
+    /* Custom I2C sensor implementation based on
+ https://github.com/meshtastic/i2c-sensor */
     meshtastic_TelemetrySensorType_CUSTOM_SENSOR = 29,
     /* MAX30102 Pulse Oximeter and Heart-Rate Sensor */
     meshtastic_TelemetrySensorType_MAX30102 = 30,
@@ -95,7 +98,8 @@ typedef struct _meshtastic_DeviceMetrics {
     /* Voltage measured */
     bool has_voltage;
     float voltage;
-    /* Utilization for the current channel, including well formed TX, RX and malformed RX (aka noise). */
+    /* Utilization for the current channel, including well formed TX, RX and
+ malformed RX (aka noise). */
     bool has_channel_utilization;
     float channel_utilization;
     /* Percent of airtime for transmission used within the last hour. */
@@ -120,23 +124,28 @@ typedef struct _meshtastic_EnvironmentMetrics {
     /* Gas resistance in MOhm measured */
     bool has_gas_resistance;
     float gas_resistance;
-    /* Voltage measured (To be depreciated in favor of PowerMetrics in Meshtastic 3.x) */
+    /* Voltage measured (To be depreciated in favor of PowerMetrics in
+ Meshtastic 3.x) */
     bool has_voltage;
     float voltage;
-    /* Current measured (To be depreciated in favor of PowerMetrics in Meshtastic 3.x) */
+    /* Current measured (To be depreciated in favor of PowerMetrics in
+ Meshtastic 3.x) */
     bool has_current;
     float current;
     /* relative scale IAQ value as measured by Bosch BME680 . value 0-500.
- Belongs to Air Quality but is not particle but VOC measurement. Other VOC values can also be put in here. */
+ Belongs to Air Quality but is not particle but VOC measurement. Other VOC
+ values can also be put in here. */
     bool has_iaq;
     uint16_t iaq;
-    /* RCWL9620 Doppler Radar Distance Sensor, used for water level detection. Float value in mm. */
+    /* RCWL9620 Doppler Radar Distance Sensor, used for water level detection.
+ Float value in mm. */
     bool has_distance;
     float distance;
     /* VEML7700 high accuracy ambient light(Lux) digital 16-bit resolution sensor. */
     bool has_lux;
     float lux;
-    /* VEML7700 high accuracy white light(irradiance) not calibrated digital 16-bit resolution sensor. */
+    /* VEML7700 high accuracy white light(irradiance) not calibrated digital
+ 16-bit resolution sensor. */
     bool has_white_lux;
     float white_lux;
     /* Infrared lux */
@@ -241,7 +250,8 @@ typedef struct _meshtastic_AirQualityMetrics {
 typedef struct _meshtastic_LocalStats {
     /* How long the device has been running since the last reboot (in seconds) */
     uint32_t uptime_seconds;
-    /* Utilization for the current channel, including well formed TX, RX and malformed RX (aka noise). */
+    /* Utilization for the current channel, including well formed TX, RX and
+ malformed RX (aka noise). */
     float channel_utilization;
     /* Percent of airtime for transmission used within the last hour. */
     float air_util_tx;
@@ -255,13 +265,16 @@ typedef struct _meshtastic_LocalStats {
     uint16_t num_online_nodes;
     /* Number of nodes total */
     uint16_t num_total_nodes;
-    /* Number of received packets that were duplicates (due to multiple nodes relaying).
- If this number is high, there are nodes in the mesh relaying packets when it's unnecessary, for example due to the ROUTER/REPEATER role. */
+    /* Number of received packets that were duplicates (due to multiple nodes
+ relaying). If this number is high, there are nodes in the mesh relaying
+ packets when it's unnecessary, for example due to the ROUTER/REPEATER role. */
     uint32_t num_rx_dupe;
-    /* Number of packets we transmitted that were a relay for others (not originating from ourselves). */
+    /* Number of packets we transmitted that were a relay for others (not
+ originating from ourselves). */
     uint32_t num_tx_relay;
-    /* Number of times we canceled a packet to be relayed, because someone else did it before us.
- This will always be zero for ROUTERs/REPEATERs. If this number is high, some other node(s) is/are relaying faster than you. */
+    /* Number of times we canceled a packet to be relayed, because someone else
+ did it before us. This will always be zero for ROUTERs/REPEATERs. If this
+ number is high, some other node(s) is/are relaying faster than you. */
     uint32_t num_tx_relay_canceled;
 } meshtastic_LocalStats;
 
@@ -277,6 +290,28 @@ typedef struct _meshtastic_HealthMetrics {
     bool has_temperature;
     float temperature;
 } meshtastic_HealthMetrics;
+
+/* Error rate reporting from a device over the mesh */
+typedef struct _meshtastic_ErrorMetrics {
+    /* How often packets collided (percent) over the module's time period */
+    bool has_collision_rate;
+    float collision_rate;
+    /* How many nodes can be reached (percent) over the module's time period */
+    bool has_reachability;
+    float reachability;
+    /* How many packets contain new data in all packets seen (percent) over the
+ module's time period */
+    bool has_usefulness;
+    float usefulness;
+    /* How long did a packet have to delay on average (ms) over the module's time
+ period */
+    bool has_avg_delay;
+    float avg_delay;
+    /* Average air transmit air utilization (percent) over the module's time
+ period */
+    bool has_avg_tx_air_util;
+    float avg_tx_air_util;
+} meshtastic_ErrorMetrics;
 
 /* Types of Measurements the telemetry module is equipped to handle */
 typedef struct _meshtastic_Telemetry {
@@ -296,6 +331,8 @@ typedef struct _meshtastic_Telemetry {
         meshtastic_LocalStats local_stats;
         /* Health telemetry metrics */
         meshtastic_HealthMetrics health_metrics;
+        /* Error telemetry metrics */
+        meshtastic_ErrorMetrics error_metrics;
     } variant;
 } meshtastic_Telemetry;
 
@@ -326,6 +363,7 @@ extern "C" {
 
 
 
+
 /* Initializer values for message structs */
 #define meshtastic_DeviceMetrics_init_default    {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_EnvironmentMetrics_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
@@ -333,6 +371,7 @@ extern "C" {
 #define meshtastic_AirQualityMetrics_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_LocalStats_init_default       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_HealthMetrics_init_default    {false, 0, false, 0, false, 0}
+#define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Telemetry_init_default        {0, 0, {meshtastic_DeviceMetrics_init_default}}
 #define meshtastic_Nau7802Config_init_default    {0, 0}
 #define meshtastic_DeviceMetrics_init_zero       {false, 0, false, 0, false, 0, false, 0, false, 0}
@@ -341,6 +380,7 @@ extern "C" {
 #define meshtastic_AirQualityMetrics_init_zero   {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_LocalStats_init_zero          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_HealthMetrics_init_zero       {false, 0, false, 0, false, 0}
+#define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Telemetry_init_zero           {0, 0, {meshtastic_DeviceMetrics_init_zero}}
 #define meshtastic_Nau7802Config_init_zero       {0, 0}
 
@@ -403,6 +443,11 @@ extern "C" {
 #define meshtastic_HealthMetrics_heart_bpm_tag   1
 #define meshtastic_HealthMetrics_spO2_tag        2
 #define meshtastic_HealthMetrics_temperature_tag 3
+#define meshtastic_ErrorMetrics_collision_rate_tag 1
+#define meshtastic_ErrorMetrics_reachability_tag 2
+#define meshtastic_ErrorMetrics_usefulness_tag   3
+#define meshtastic_ErrorMetrics_avg_delay_tag    4
+#define meshtastic_ErrorMetrics_avg_tx_air_util_tag 5
 #define meshtastic_Telemetry_time_tag            1
 #define meshtastic_Telemetry_device_metrics_tag  2
 #define meshtastic_Telemetry_environment_metrics_tag 3
@@ -410,6 +455,7 @@ extern "C" {
 #define meshtastic_Telemetry_power_metrics_tag   5
 #define meshtastic_Telemetry_local_stats_tag     6
 #define meshtastic_Telemetry_health_metrics_tag  7
+#define meshtastic_Telemetry_error_metrics_tag   8
 #define meshtastic_Nau7802Config_zeroOffset_tag  1
 #define meshtastic_Nau7802Config_calibrationFactor_tag 2
 
@@ -496,6 +542,15 @@ X(a, STATIC,   OPTIONAL, FLOAT,    temperature,       3)
 #define meshtastic_HealthMetrics_CALLBACK NULL
 #define meshtastic_HealthMetrics_DEFAULT NULL
 
+#define meshtastic_ErrorMetrics_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, FLOAT,    collision_rate,    1) \
+X(a, STATIC,   OPTIONAL, FLOAT,    reachability,      2) \
+X(a, STATIC,   OPTIONAL, FLOAT,    usefulness,        3) \
+X(a, STATIC,   OPTIONAL, FLOAT,    avg_delay,         4) \
+X(a, STATIC,   OPTIONAL, FLOAT,    avg_tx_air_util,   5)
+#define meshtastic_ErrorMetrics_CALLBACK NULL
+#define meshtastic_ErrorMetrics_DEFAULT NULL
+
 #define meshtastic_Telemetry_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, FIXED32,  time,              1) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (variant,device_metrics,variant.device_metrics),   2) \
@@ -503,7 +558,8 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (variant,environment_metrics,variant.environm
 X(a, STATIC,   ONEOF,    MESSAGE,  (variant,air_quality_metrics,variant.air_quality_metrics),   4) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (variant,power_metrics,variant.power_metrics),   5) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (variant,local_stats,variant.local_stats),   6) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (variant,health_metrics,variant.health_metrics),   7)
+X(a, STATIC,   ONEOF,    MESSAGE,  (variant,health_metrics,variant.health_metrics),   7) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (variant,error_metrics,variant.error_metrics),   8)
 #define meshtastic_Telemetry_CALLBACK NULL
 #define meshtastic_Telemetry_DEFAULT NULL
 #define meshtastic_Telemetry_variant_device_metrics_MSGTYPE meshtastic_DeviceMetrics
@@ -512,6 +568,7 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (variant,health_metrics,variant.health_metric
 #define meshtastic_Telemetry_variant_power_metrics_MSGTYPE meshtastic_PowerMetrics
 #define meshtastic_Telemetry_variant_local_stats_MSGTYPE meshtastic_LocalStats
 #define meshtastic_Telemetry_variant_health_metrics_MSGTYPE meshtastic_HealthMetrics
+#define meshtastic_Telemetry_variant_error_metrics_MSGTYPE meshtastic_ErrorMetrics
 
 #define meshtastic_Nau7802Config_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, INT32,    zeroOffset,        1) \
@@ -525,6 +582,7 @@ extern const pb_msgdesc_t meshtastic_PowerMetrics_msg;
 extern const pb_msgdesc_t meshtastic_AirQualityMetrics_msg;
 extern const pb_msgdesc_t meshtastic_LocalStats_msg;
 extern const pb_msgdesc_t meshtastic_HealthMetrics_msg;
+extern const pb_msgdesc_t meshtastic_ErrorMetrics_msg;
 extern const pb_msgdesc_t meshtastic_Telemetry_msg;
 extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 
@@ -535,6 +593,7 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_AirQualityMetrics_fields &meshtastic_AirQualityMetrics_msg
 #define meshtastic_LocalStats_fields &meshtastic_LocalStats_msg
 #define meshtastic_HealthMetrics_fields &meshtastic_HealthMetrics_msg
+#define meshtastic_ErrorMetrics_fields &meshtastic_ErrorMetrics_msg
 #define meshtastic_Telemetry_fields &meshtastic_Telemetry_msg
 #define meshtastic_Nau7802Config_fields &meshtastic_Nau7802Config_msg
 
@@ -543,6 +602,7 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_AirQualityMetrics_size        78
 #define meshtastic_DeviceMetrics_size            27
 #define meshtastic_EnvironmentMetrics_size       103
+#define meshtastic_ErrorMetrics_size             25
 #define meshtastic_HealthMetrics_size            11
 #define meshtastic_LocalStats_size               60
 #define meshtastic_Nau7802Config_size            16
