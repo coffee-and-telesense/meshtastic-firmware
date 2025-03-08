@@ -1,5 +1,6 @@
 #include "configuration.h"
 #if !MESHTASTIC_EXCLUDE_INPUTBROKER
+#include "Modules.h"
 #include "input/ExpressLRSFiveWay.h"
 #include "input/InputBroker.h"
 #include "input/RotaryEncoderInterruptImpl1.h"
@@ -65,6 +66,7 @@
 #endif
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
 #include "modules/Telemetry/ErrorTelemetry.h"
+ErrorTelemetryModule *errorTelemetryModule;
 #endif
 #ifdef ARCH_ESP32
 #if defined(USE_SX1280) && !MESHTASTIC_EXCLUDE_AUDIO
@@ -193,7 +195,7 @@ void setupModules()
 #if HAS_TELEMETRY
         new DeviceTelemetryModule();
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-        new ErrorTelemetryModule();
+        errorTelemetryModule = new ErrorTelemetryModule();
 #endif
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR

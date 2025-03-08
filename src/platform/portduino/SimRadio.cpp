@@ -2,7 +2,7 @@
 #include "MeshService.h"
 #include "Router.h"
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-#include "modules/Telemetry/ErrorTelemetry.h"
+#include "modules/Modules.h"
 #endif
 SimRadio::SimRadio() : NotifiedWorkerThread("SimRadio")
 {
@@ -281,7 +281,7 @@ void SimRadio::startReceive(meshtastic_MeshPacket *p)
             handleTransmitInterrupt(); // Finish sending first
         } else if ((interval - airtimeLeft) > preambleTimeMsec) {
             // Timing collision
-            ErrorTelemetryModule->timingCollisionCount++;
+            errorTelemetryModule->timingCollisionCount++;
             return;
         }
     }

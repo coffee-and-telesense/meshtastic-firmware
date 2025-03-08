@@ -32,18 +32,6 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     */
     virtual bool wantPacket(const meshtastic_MeshPacket *p) override
     {
-        // Get the average delay and add it to a running mean
-        // New average = old average * (n-1)/n + new value /n
-        if (this->receivedCount != 0) {
-            this->avg_tx_delay = this->avg_tx_delay * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
-                                 ((float)p->tx_after / (float)this->receivedCount);
-        }
-
-        // Get the tx util and add it to a running mean
-        if (this->receivedCount != 0) {
-            this->avg_tx_airutil = this->avg_tx_airutil * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
-                                   (airTime->utilizationTXPercent() * 100 / (float)this->receivedCount);
-        }
         switch (p->decoded.portnum) {
         case meshtastic_PortNum_TELEMETRY_APP:
             return true;
@@ -53,6 +41,9 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     }
 
     uint32_t timingCollisionCount = 0;
+    uint32_t count_avg_delay = 0;
+    uint32_t avg_tx_delay = 0.0f;
+    uint32_t receivedCount = 0;
 
   protected:
     /** Called to handle a particular incoming message
@@ -86,12 +77,9 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t lastCollisionCount = 0;
     uint32_t sensedCount = 0;
     uint32_t lastSensedCount = 0;
-    uint32_t receivedCount = 0;
     uint32_t lastReceivedCount = 0;
     uint32_t transmitCount = 0;
     uint32_t lastTransmitCount = 0;
-    float avg_tx_delay = 0.0f;
-    float avg_tx_airutil = 0.0f;
 
     void refreshUptime()
     {

@@ -16,7 +16,7 @@
 int32_t ErrorTelemetryModule::runOnce()
 {
     moduleConfig.telemetry.error_measurement_enabled = 1;
-    moduleConfig.telemetry.error_update_interval = 30;
+    moduleConfig.telemetry.error_update_interval = 60;
 
     if (!(moduleConfig.telemetry.error_measurement_enabled)) {
         // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
@@ -87,29 +87,29 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
     if (RadioLibInterface::instance) {
         // Total sensed packets (good and bad)
-        this->lastSensedCount = this->sensedCount;
+        // this->lastSensedCount = this->sensedCount;
         this->sensedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
-        this->sensedCount -= this->lastSensedCount;
+        // this->sensedCount -= this->lastSensedCount;
 
         // Total received packets (good)
-        this->lastReceivedCount = this->receivedCount;
+        // this->lastReceivedCount = this->receivedCount;
         this->receivedCount = RadioLibInterface::instance->rxGood;
-        this->receivedCount -= this->lastReceivedCount;
+        // this->receivedCount -= this->lastReceivedCount;
 
         // Total transmit packets
-        this->lastTransmitCount = this->transmitCount;
+        // this->lastTransmitCount = this->transmitCount;
         this->transmitCount = RadioLibInterface::instance->txGood;
-        this->transmitCount -= this->lastTransmitCount;
+        // this->transmitCount -= this->lastTransmitCount;
 
         // Total collided packets
-        this->lastCollisionCount = this->collisionCount;
+        // this->lastCollisionCount = this->collisionCount;
         this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
-        this->collisionCount -= this->lastCollisionCount;
+        // this->collisionCount -= this->lastCollisionCount;
 
         // Useful count is the received packets - dupes - bads
-        this->lastUsefulCount = this->usefulCount;
+        // this->lastUsefulCount = this->usefulCount;
         this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
-        this->usefulCount -= this->lastUsefulCount;
+        // this->usefulCount -= this->lastUsefulCount;
     }
 
     meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
@@ -117,9 +117,9 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     t.time = getTime();
     t.variant.error_metrics = meshtastic_ErrorMetrics_init_zero;
 
-    // Some time period which the measures occur over as set by users
+    // Some time period (seconds) which the measures occur over as set by users
     t.variant.error_metrics.has_period = true;
-    t.variant.error_metrics.period = (millis() - this->lastSentToMesh);
+    t.variant.error_metrics.period = (millis() - this->lastSentToMesh) / 1000;
 
     // Increment collision count if a power, frequency, spreading factor, and timing collide
     // Then our collision rate is that count / the count of sensed packets
@@ -153,12 +153,8 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     }
 
     // the following might be better done already in the grafana dashboard
-    if (this->avg_tx_airutil != 0) {
-        t.variant.error_metrics.has_avg_tx_air_util = true;
-        t.variant.error_metrics.avg_tx_air_util = this->avg_tx_airutil * 100;
-    } else {
-        t.variant.error_metrics.has_avg_tx_air_util = false;
-    }
+    t.variant.error_metrics.has_avg_tx_air_util = true;
+    t.variant.error_metrics.avg_tx_air_util = airTime->utilizationTXPercent();
 
     return t;
 }
@@ -166,7 +162,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 {
     meshtastic_Telemetry telemetry = getErrorTelemetry();
-    LOG_INFO("Send: period=%f", telemetry.variant.error_metrics.period);
+    LOG_INFO("Send: period=%zu", telemetry.variant.error_metrics.period);
     if (telemetry.variant.error_metrics.has_collision_rate)
         LOG_INFO("      collision_rate=%f", telemetry.variant.error_metrics.collision_rate);
     if (telemetry.variant.error_metrics.has_reachability)
@@ -174,7 +170,7 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     if (telemetry.variant.error_metrics.has_usefulness)
         LOG_INFO("      usefulness=%f", telemetry.variant.error_metrics.usefulness);
     if (telemetry.variant.error_metrics.has_avg_delay)
-        LOG_INFO("      avg_delay=%f", telemetry.variant.error_metrics.avg_delay);
+        LOG_INFO("      avg_delay=%zu", telemetry.variant.error_metrics.avg_delay);
     if (telemetry.variant.error_metrics.has_avg_tx_air_util)
         LOG_INFO("      avg_tx_air_util=%f", telemetry.variant.error_metrics.avg_tx_air_util);
 
@@ -193,7 +189,8 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     }
 
     // Reset values
-    this->avg_tx_airutil = 0.0f;
-    this->avg_tx_delay = 0.0f;
+    this->avg_tx_delay = 0;
+    this->timingCollisionCount = 0;
+    this->count_avg_delay = 0;
     return true;
 }

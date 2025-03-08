@@ -10,7 +10,9 @@
 #include "mesh-pb-constants.h"
 #include <pb_decode.h>
 #include <pb_encode.h>
-
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
+#include "modules/Modules.h"
+#endif
 #if ARCH_PORTDUINO
 #include "PortduinoGlue.h"
 #include "meshUtils.h"
@@ -299,6 +301,16 @@ void RadioLibInterface::setTransmitDelay()
         unsigned long add_delay = p->rx_rssi ? getTxDelayMsecWeighted(p->rx_snr) : getTxDelayMsec();
         unsigned long now = millis();
         p->tx_after = min(max(p->tx_after + add_delay, now + add_delay), now + 2 * getTxDelayMsecWeightedWorst(p->rx_snr));
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
+        // Get the average delay and add it to a running mean
+        // New average = old average * (n-1)/n + new value /n
+        if (errorTelemetryModule->receivedCount != 0) {
+            errorTelemetryModule->avg_tx_delay =
+                errorTelemetryModule->avg_tx_delay *
+                    ((errorTelemetryModule->count_avg_delay - 1) / errorTelemetryModule->count_avg_delay) +
+                (p->tx_after / errorTelemetryModule->count_avg_delay);
+        }
+#endif
         notifyLater(p->tx_after - now, TRANSMIT_DELAY_COMPLETED, false);
     } else if (p->rx_snr == 0 && p->rx_rssi == 0) {
         /* We assume if rx_snr = 0 and rx_rssi = 0, the packet was generated locally.

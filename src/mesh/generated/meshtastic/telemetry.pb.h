@@ -316,15 +316,15 @@ typedef struct _meshtastic_ErrorMetrics {
     /* How long did a packet have to delay on average (ms) over the module's time
  period */
     bool has_avg_delay;
-    float avg_delay;
+    uint32_t avg_delay;
     /* Average air transmit air utilization (percent) over the module's time
  period */
     bool has_avg_tx_air_util;
     float avg_tx_air_util;
-    /* Time period (ms) for measurements which occur, also the timeout for how
- often the module collects and sends data */
+    /* Time period (seconds) for measurements which occur, also the timeout for
+ how often the module collects and sends data */
     bool has_period;
-    float period;
+    uint32_t period;
 } meshtastic_ErrorMetrics;
 
 /* Types of Measurements the telemetry module is equipped to handle */
@@ -567,9 +567,9 @@ X(a, STATIC,   OPTIONAL, FLOAT,    temperature,       3)
 X(a, STATIC,   OPTIONAL, FLOAT,    collision_rate,    1) \
 X(a, STATIC,   OPTIONAL, FLOAT,    reachability,      2) \
 X(a, STATIC,   OPTIONAL, FLOAT,    usefulness,        3) \
-X(a, STATIC,   OPTIONAL, FLOAT,    avg_delay,         4) \
+X(a, STATIC,   OPTIONAL, UINT32,   avg_delay,         4) \
 X(a, STATIC,   OPTIONAL, FLOAT,    avg_tx_air_util,   5) \
-X(a, STATIC,   OPTIONAL, FLOAT,    period,            6)
+X(a, STATIC,   OPTIONAL, UINT32,   period,            6)
 #define meshtastic_ErrorMetrics_CALLBACK NULL
 #define meshtastic_ErrorMetrics_DEFAULT NULL
 
@@ -624,7 +624,7 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_AirQualityMetrics_size        80
 #define meshtastic_DeviceMetrics_size            27
 #define meshtastic_EnvironmentMetrics_size       106
-#define meshtastic_ErrorMetrics_size             30
+#define meshtastic_ErrorMetrics_size             32
 #define meshtastic_HealthMetrics_size            11
 #define meshtastic_LocalStats_size               60
 #define meshtastic_Nau7802Config_size            16
