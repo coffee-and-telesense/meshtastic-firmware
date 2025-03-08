@@ -311,6 +311,8 @@ NodeDB::NodeDB()
             moduleConfig.telemetry.power_update_interval, min_default_telemetry_interval_secs);
         moduleConfig.telemetry.health_update_interval = Default::getConfiguredOrMinimumValue(
             moduleConfig.telemetry.health_update_interval, min_default_telemetry_interval_secs);
+        moduleConfig.telemetry.error_update_interval = Default::getConfiguredOrMinimumValue(
+            moduleConfig.telemetry.error_update_interval, min_default_telemetry_interval_secs);
     }
     // Ensure that the neighbor info update interval is coerced to the minimum
     moduleConfig.neighbor_info.update_interval =
@@ -735,6 +737,7 @@ void NodeDB::installRoleDefaults(meshtastic_Config_DeviceConfig_Role role)
             (meshtastic_Config_PositionConfig_PositionFlags_ALTITUDE | meshtastic_Config_PositionConfig_PositionFlags_SPEED |
              meshtastic_Config_PositionConfig_PositionFlags_HEADING | meshtastic_Config_PositionConfig_PositionFlags_DOP);
         moduleConfig.telemetry.device_update_interval = ONE_DAY;
+        moduleConfig.telemetry.error_update_interval = ONE_DAY / 2;
     } else if (role == meshtastic_Config_DeviceConfig_Role_TAK_TRACKER) {
         config.device.node_info_broadcast_secs = ONE_DAY;
         config.position.position_broadcast_smart_enabled = true;
@@ -746,6 +749,7 @@ void NodeDB::installRoleDefaults(meshtastic_Config_DeviceConfig_Role role)
             (meshtastic_Config_PositionConfig_PositionFlags_ALTITUDE | meshtastic_Config_PositionConfig_PositionFlags_SPEED |
              meshtastic_Config_PositionConfig_PositionFlags_HEADING | meshtastic_Config_PositionConfig_PositionFlags_DOP);
         moduleConfig.telemetry.device_update_interval = ONE_DAY;
+        moduleConfig.telemetry.error_update_interval = ONE_DAY / 2;
     } else if (role == meshtastic_Config_DeviceConfig_Role_CLIENT_HIDDEN) {
         config.device.rebroadcast_mode = meshtastic_Config_DeviceConfig_RebroadcastMode_LOCAL_ONLY;
         config.device.node_info_broadcast_secs = UINT32_MAX;
@@ -756,6 +760,7 @@ void NodeDB::installRoleDefaults(meshtastic_Config_DeviceConfig_Role role)
         moduleConfig.telemetry.environment_update_interval = UINT32_MAX;
         moduleConfig.telemetry.air_quality_interval = UINT32_MAX;
         moduleConfig.telemetry.health_update_interval = UINT32_MAX;
+        moduleConfig.telemetry.error_update_interval = UINT32_MAX;
     }
 }
 
@@ -769,6 +774,7 @@ void NodeDB::initModuleConfigIntervals()
     moduleConfig.telemetry.health_update_interval = 0;
     moduleConfig.neighbor_info.update_interval = 0;
     moduleConfig.paxcounter.paxcounter_update_interval = 0;
+    moduleConfig.telemetry.error_update_interval = 0;
 }
 
 void NodeDB::installDefaultChannels()
@@ -1093,6 +1099,8 @@ void NodeDB::loadFromDisk()
             moduleConfig.neighbor_info.update_interval = 0;
         if (moduleConfig.paxcounter.paxcounter_update_interval == 900)
             moduleConfig.paxcounter.paxcounter_update_interval = 0;
+        if (moduleConfig.telemetry.error_update_interval == 900)
+            moduleConfig.telemetry.error_update_interval = 0;
 
         saveToDisk(SEGMENT_MODULECONFIG);
     }

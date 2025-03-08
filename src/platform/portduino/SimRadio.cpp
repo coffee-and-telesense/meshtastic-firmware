@@ -1,7 +1,7 @@
 #include "SimRadio.h"
 #include "MeshService.h"
 #include "Router.h"
-#ifdef ERROR_METTRICS
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
 #include "modules/Telemetry/ErrorTelemetry.h"
 #endif
 SimRadio::SimRadio() : NotifiedWorkerThread("SimRadio")
@@ -269,7 +269,7 @@ void SimRadio::startReceive(meshtastic_MeshPacket *p)
     uint32_t airtimeMsec = getPacketTime(p);
     notifyLater(airtimeMsec, ISR_RX, false); // Model the time it is busy receiving
 #else
-#ifdef ERROR_METRICS
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
     if (isActivelyReceiving()) {
         rxBad++;
         packetPool.release(receivingPacket);

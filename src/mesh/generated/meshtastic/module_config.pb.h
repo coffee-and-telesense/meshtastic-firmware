@@ -103,45 +103,54 @@ typedef enum _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar {
 } meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar;
 
 /* Struct definitions */
-/* Settings for reporting unencrypted information about our node to a map via MQTT */
+/* Settings for reporting unencrypted information about our node to a map via
+ MQTT */
 typedef struct _meshtastic_ModuleConfig_MapReportSettings {
     /* How often we should report our info to the map (in seconds) */
     uint32_t publish_interval_secs;
-    /* Bits of precision for the location sent (default of 32 is full precision). */
+    /* Bits of precision for the location sent (default of 32 is full
+ precision). */
     uint32_t position_precision;
 } meshtastic_ModuleConfig_MapReportSettings;
 
 /* MQTT Client Config */
 typedef struct _meshtastic_ModuleConfig_MQTTConfig {
-    /* If a meshtastic node is able to reach the internet it will normally attempt to gateway any channels that are marked as
- is_uplink_enabled or is_downlink_enabled. */
+    /* If a meshtastic node is able to reach the internet it will normally
+ attempt to gateway any channels that are marked as is_uplink_enabled or
+ is_downlink_enabled. */
     bool enabled;
     /* The server to use for our MQTT global message gateway feature.
  If not set, the default server will be used */
     char address[64];
     /* MQTT username to use (most useful for a custom MQTT server).
  If using a custom server, this will be honoured even if empty.
- If using the default server, this will only be honoured if set, otherwise the device will use the default username */
+ If using the default server, this will only be honoured if set, otherwise
+ the device will use the default username */
     char username[64];
     /* MQTT password to use (most useful for a custom MQTT server).
  If using a custom server, this will be honoured even if empty.
- If using the default server, this will only be honoured if set, otherwise the device will use the default password */
+ If using the default server, this will only be honoured if set, otherwise
+ the device will use the default password */
     char password[64];
     /* Whether to send encrypted or decrypted packets to MQTT.
  This parameter is only honoured if you also set server
- (the default official mqtt.meshtastic.org server can handle encrypted packets)
- Decrypted packets may be useful for external systems that want to consume meshtastic packets */
+ (the default official mqtt.meshtastic.org server can handle encrypted
+ packets) Decrypted packets may be useful for external systems that want
+ to consume meshtastic packets */
     bool encryption_enabled;
     /* Whether to send / consume json packets on MQTT */
     bool json_enabled;
     /* If true, we attempt to establish a secure connection using TLS */
     bool tls_enabled;
     /* The root topic to use for MQTT messages. Default is "msh".
- This is useful if you want to use a single MQTT server for multiple meshtastic networks and separate them via ACLs */
+ This is useful if you want to use a single MQTT server for multiple
+ meshtastic networks and separate them via ACLs */
     char root[32];
-    /* If true, we can use the connected phone / client to proxy messages to MQTT instead of a direct connection */
+    /* If true, we can use the connected phone / client to proxy messages to
+ MQTT instead of a direct connection */
     bool proxy_to_client_enabled;
-    /* If true, we will periodically report unencrypted information about our node to a map via MQTT */
+    /* If true, we will periodically report unencrypted information about our
+ node to a map via MQTT */
     bool map_reporting_enabled;
     /* Settings for reporting information about our node to a map via MQTT */
     bool has_map_report_settings;
@@ -155,8 +164,9 @@ typedef struct _meshtastic_ModuleConfig_NeighborInfoConfig {
     /* Interval in seconds of how often we should try to send our
  Neighbor Info (minimum is 14400, i.e., 4 hours) */
     uint32_t update_interval;
-    /* Whether in addition to sending it to MQTT and the PhoneAPI, our NeighborInfo should be transmitted over LoRa.
- Note that this is not available on a channel with default key and name. */
+    /* Whether in addition to sending it to MQTT and the PhoneAPI, our
+ NeighborInfo should be transmitted over LoRa. Note that this is not
+ available on a channel with default key and name. */
     bool transmit_over_lora;
 } meshtastic_ModuleConfig_NeighborInfoConfig;
 
@@ -233,8 +243,9 @@ typedef struct _meshtastic_ModuleConfig_SerialConfig {
     uint32_t timeout;
     /* Mode for serial module operation */
     meshtastic_ModuleConfig_SerialConfig_Serial_Mode mode;
-    /* Overrides the platform's defacto Serial port instance to use with Serial module config settings
- This is currently only usable in output modes like NMEA / CalTopo and may behave strangely or not work at all in other modes
+    /* Overrides the platform's defacto Serial port instance to use with Serial
+ module config settings This is currently only usable in output modes like
+ NMEA / CalTopo and may behave strangely or not work at all in other modes
  Existing logging over the Serial Console will still be present */
     bool override_console_serial_port;
 } meshtastic_ModuleConfig_SerialConfig;
@@ -279,8 +290,9 @@ typedef struct _meshtastic_ModuleConfig_ExternalNotificationConfig {
  Default is 0 which means don't repeat at all. 60 would mean blink
  and/or beep for 60 seconds */
     uint16_t nag_timeout;
-    /* When true, enables devices with native I2S audio output to use the RTTTL over speaker like a buzzer
- T-Watch S3 and T-Deck for example have this capability */
+    /* When true, enables devices with native I2S audio output to use the RTTTL
+ over speaker like a buzzer T-Watch S3 and T-Deck for example have this
+ capability */
     bool use_i2s_as_buzzer;
 } meshtastic_ModuleConfig_ExternalNotificationConfig;
 
@@ -296,7 +308,8 @@ typedef struct _meshtastic_ModuleConfig_StoreForwardConfig {
     uint32_t history_return_max;
     /* TODO: REPLACE */
     uint32_t history_return_window;
-    /* Set to true to let this node act as a server that stores received messages and resends them upon request. */
+    /* Set to true to let this node act as a server that stores received
+ messages and resends them upon request. */
     bool is_server;
 } meshtastic_ModuleConfig_StoreForwardConfig;
 
@@ -345,11 +358,18 @@ typedef struct _meshtastic_ModuleConfig_TelemetryConfig {
     uint32_t health_update_interval;
     /* Enable/Disable the health telemetry module on-device display */
     bool health_screen_enabled;
+    /* Preferences for the Error Telemetry Module
+ Enable/Disable this telemetry */
+    bool error_measurement_enabled;
+    /* Error metric interval in seconds of how often we should try ot send our
+ metrics to the mesh */
+    uint32_t error_update_interval;
 } meshtastic_ModuleConfig_TelemetryConfig;
 
 /* TODO: REPLACE */
 typedef struct _meshtastic_ModuleConfig_CannedMessageConfig {
-    /* Enable the rotary encoder #1. This is a 'dumb' encoder sending pulses on both A and B pins while rotating. */
+    /* Enable the rotary encoder #1. This is a 'dumb' encoder sending pulses on
+ both A and B pins while rotating. */
     bool rotary1_enabled;
     /* GPIO pin for rotary encoder A port. */
     uint32_t inputbroker_pin_a;
@@ -363,19 +383,22 @@ typedef struct _meshtastic_ModuleConfig_CannedMessageConfig {
     meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar inputbroker_event_ccw;
     /* Generate input event on Press of this kind. */
     meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar inputbroker_event_press;
-    /* Enable the Up/Down/Select input device. Can be RAK rotary encoder or 3 buttons. Uses the a/b/press definitions from inputbroker. */
+    /* Enable the Up/Down/Select input device. Can be RAK rotary encoder or 3
+ buttons. Uses the a/b/press definitions from inputbroker. */
     bool updown1_enabled;
     /* Enable/disable CannedMessageModule. */
     bool enabled;
     /* Input event origin accepted by the canned message module.
- Can be e.g. "rotEnc1", "upDownEnc1", "scanAndSelect", "cardkb", "serialkb", or keyword "_any" */
+ Can be e.g. "rotEnc1", "upDownEnc1", "scanAndSelect", "cardkb",
+ "serialkb", or keyword "_any" */
     char allow_input_source[16];
     /* CannedMessageModule also sends a bell character with the messages.
  ExternalNotificationModule can benefit from this feature. */
     bool send_bell;
 } meshtastic_ModuleConfig_CannedMessageConfig;
 
-/* Ambient Lighting Module - Settings for control of onboard LEDs to allow users to adjust the brightness levels and respective color levels.
+/* Ambient Lighting Module - Settings for control of onboard LEDs to allow
+users to adjust the brightness levels and respective color levels.
 Initially created for the RAK14001 RGB LED module. */
 typedef struct _meshtastic_ModuleConfig_AmbientLightingConfig {
     /* Sets LED to on or off. */
@@ -404,7 +427,8 @@ typedef struct _meshtastic_RemoteHardwarePin {
 typedef struct _meshtastic_ModuleConfig_RemoteHardwareConfig {
     /* Whether the Module is enabled */
     bool enabled;
-    /* Whether the Module allows consumers to read / write to pins not defined in available_pins */
+    /* Whether the Module allows consumers to read / write to pins not defined
+ in available_pins */
     bool allow_undefined_pin_access;
     /* Exposes the available pins to the mesh for reading and writing */
     pb_size_t available_pins_count;
@@ -512,7 +536,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_ExternalNotificationConfig_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_ModuleConfig_StoreForwardConfig_init_default {0, 0, 0, 0, 0, 0}
 #define meshtastic_ModuleConfig_RangeTestConfig_init_default {0, 0, 0}
-#define meshtastic_ModuleConfig_TelemetryConfig_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_ModuleConfig_TelemetryConfig_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_ModuleConfig_CannedMessageConfig_init_default {0, 0, 0, 0, _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar_MIN, _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar_MIN, _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar_MIN, 0, 0, "", 0}
 #define meshtastic_ModuleConfig_AmbientLightingConfig_init_default {0, 0, 0, 0, 0}
 #define meshtastic_RemoteHardwarePin_init_default {0, "", _meshtastic_RemoteHardwarePinType_MIN}
@@ -528,7 +552,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_ExternalNotificationConfig_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_ModuleConfig_StoreForwardConfig_init_zero {0, 0, 0, 0, 0, 0}
 #define meshtastic_ModuleConfig_RangeTestConfig_init_zero {0, 0, 0}
-#define meshtastic_ModuleConfig_TelemetryConfig_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_ModuleConfig_TelemetryConfig_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_ModuleConfig_CannedMessageConfig_init_zero {0, 0, 0, 0, _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar_MIN, _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar_MIN, _meshtastic_ModuleConfig_CannedMessageConfig_InputEventChar_MIN, 0, 0, "", 0}
 #define meshtastic_ModuleConfig_AmbientLightingConfig_init_zero {0, 0, 0, 0, 0}
 #define meshtastic_RemoteHardwarePin_init_zero   {0, "", _meshtastic_RemoteHardwarePinType_MIN}
@@ -614,6 +638,8 @@ extern "C" {
 #define meshtastic_ModuleConfig_TelemetryConfig_health_measurement_enabled_tag 11
 #define meshtastic_ModuleConfig_TelemetryConfig_health_update_interval_tag 12
 #define meshtastic_ModuleConfig_TelemetryConfig_health_screen_enabled_tag 13
+#define meshtastic_ModuleConfig_TelemetryConfig_error_measurement_enabled_tag 14
+#define meshtastic_ModuleConfig_TelemetryConfig_error_update_interval_tag 15
 #define meshtastic_ModuleConfig_CannedMessageConfig_rotary1_enabled_tag 1
 #define meshtastic_ModuleConfig_CannedMessageConfig_inputbroker_pin_a_tag 2
 #define meshtastic_ModuleConfig_CannedMessageConfig_inputbroker_pin_b_tag 3
@@ -810,7 +836,9 @@ X(a, STATIC,   SINGULAR, UINT32,   power_update_interval,   9) \
 X(a, STATIC,   SINGULAR, BOOL,     power_screen_enabled,  10) \
 X(a, STATIC,   SINGULAR, BOOL,     health_measurement_enabled,  11) \
 X(a, STATIC,   SINGULAR, UINT32,   health_update_interval,  12) \
-X(a, STATIC,   SINGULAR, BOOL,     health_screen_enabled,  13)
+X(a, STATIC,   SINGULAR, BOOL,     health_screen_enabled,  13) \
+X(a, STATIC,   SINGULAR, BOOL,     error_measurement_enabled,  14) \
+X(a, STATIC,   SINGULAR, UINT32,   error_update_interval,  15)
 #define meshtastic_ModuleConfig_TelemetryConfig_CALLBACK NULL
 #define meshtastic_ModuleConfig_TelemetryConfig_DEFAULT NULL
 
@@ -895,7 +923,7 @@ extern const pb_msgdesc_t meshtastic_RemoteHardwarePin_msg;
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_size 96
 #define meshtastic_ModuleConfig_SerialConfig_size 28
 #define meshtastic_ModuleConfig_StoreForwardConfig_size 24
-#define meshtastic_ModuleConfig_TelemetryConfig_size 46
+#define meshtastic_ModuleConfig_TelemetryConfig_size 54
 #define meshtastic_ModuleConfig_size             257
 #define meshtastic_RemoteHardwarePin_size        21
 

@@ -4,6 +4,7 @@
 #include "PhoneAPI.h"
 #include "ProtobufModule.h"
 #include "main.h"
+#include "meshtastic/portnums.pb.h"
 #include <OLEDDisplay.h>
 #include <OLEDDisplayUi.h>
 #include <cstdint>
@@ -21,7 +22,7 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
         uptimeWrapCount = 0;
         uptimeLastMs = millis();
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
-        setIntervalFromNow(45 * 1000); // Wait until NodeInfo is sent
+        setIntervalFromNow(45 * 2000); // Warm up a bit
     }
     virtual bool wantUIFrame() { return false; }
 
@@ -41,11 +42,14 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
         // Get the tx util and add it to a running mean
         if (this->receivedCount != 0) {
             this->avg_tx_airutil = this->avg_tx_airutil * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
-                                   (airTime->utilizationTXPercent() / (float)this->receivedCount);
+                                   (airTime->utilizationTXPercent() * 100 / (float)this->receivedCount);
         }
-
-        // Return false since we aren't doing anything special, just counting.
-        return false;
+        switch (p->decoded.portnum) {
+        case meshtastic_PortNum_TELEMETRY_APP:
+            return true;
+        default:
+            return false;
+        }
     }
 
     uint32_t timingCollisionCount = 0;
@@ -77,10 +81,13 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t lastSentToMesh = 0;
 
     uint32_t usefulCount = 0;
+    uint32_t lastUsefulCount = 0;
     uint32_t collisionCount = 0;
+    uint32_t lastCollisionCount = 0;
     uint32_t sensedCount = 0;
     uint32_t lastSensedCount = 0;
     uint32_t receivedCount = 0;
+    uint32_t lastReceivedCount = 0;
     uint32_t transmitCount = 0;
     uint32_t lastTransmitCount = 0;
     float avg_tx_delay = 0.0f;

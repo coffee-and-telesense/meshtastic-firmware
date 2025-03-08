@@ -15,13 +15,22 @@
 
 int32_t ErrorTelemetryModule::runOnce()
 {
+    moduleConfig.telemetry.error_measurement_enabled = 1;
+    moduleConfig.telemetry.error_update_interval = 30;
+
+    if (!(moduleConfig.telemetry.error_measurement_enabled)) {
+        // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
+        return disable();
+    } else {
+        LOG_INFO("Error metrics telemetry: init");
+    }
     refreshUptime();
     bool isImpoliteRole =
         IS_ONE_OF(config.device.role, meshtastic_Config_DeviceConfig_Role_SENSOR, meshtastic_Config_DeviceConfig_Role_ROUTER);
     if (((lastSentToMesh == 0) ||
-         ((uptimeLastMs - lastSentToMesh) >=
-          Default::getConfiguredOrDefaultMsScaled(moduleConfig.telemetry.device_update_interval,
-                                                  default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
+         ((uptimeLastMs - lastSentToMesh) >= Default::getConfiguredOrDefaultMsScaled(moduleConfig.telemetry.error_update_interval,
+                                                                                     default_telemetry_broadcast_interval_secs,
+                                                                                     numOnlineNodes))) &&
         airTime->isTxAllowedChannelUtil(!isImpoliteRole) && airTime->isTxAllowedAirUtil() &&
         config.device.role != meshtastic_Config_DeviceConfig_Role_REPEATER &&
         config.device.role != meshtastic_Config_DeviceConfig_Role_CLIENT_HIDDEN) {
@@ -37,6 +46,17 @@ int32_t ErrorTelemetryModule::runOnce()
 
 bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Telemetry *t)
 {
+    // Don't worry about storing telemetry in NodeDB if we're a repeater
+    if (config.device.role == meshtastic_Config_DeviceConfig_Role_REPEATER)
+        return false;
+
+    if (t->which_variant == meshtastic_Telemetry_error_metrics_tag) {
+#ifdef DEBUG_PORT
+        const char *sender = getSenderShortName(mp);
+#endif
+        nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
+    }
+
     return false; // Let others look at this message also if they want
 }
 
@@ -55,7 +75,7 @@ meshtastic_MeshPacket *ErrorTelemetryModule::allocReply()
             return NULL;
         }
         // Check for a request for error metrics
-        if (decoded->which_variant == meshtastic_Telemetry_device_metrics_tag) {
+        if (decoded->which_variant == meshtastic_Telemetry_error_metrics_tag) {
             LOG_INFO("Error telemetry reply to request");
             return allocDataProtobuf(getErrorTelemetry());
         }
@@ -65,31 +85,39 @@ meshtastic_MeshPacket *ErrorTelemetryModule::allocReply()
 
 meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
-    // Total sensed packets (good and bad)
-    this->lastSensedCount = this->sensedCount;
-    this->sensedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
-    this->sensedCount -= this->lastSensedCount;
+    if (RadioLibInterface::instance) {
+        // Total sensed packets (good and bad)
+        this->lastSensedCount = this->sensedCount;
+        this->sensedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
+        this->sensedCount -= this->lastSensedCount;
 
-    // Total received packets (good)
-    this->receivedCount = RadioLibInterface::instance->rxGood;
+        // Total received packets (good)
+        this->lastReceivedCount = this->receivedCount;
+        this->receivedCount = RadioLibInterface::instance->rxGood;
+        this->receivedCount -= this->lastReceivedCount;
 
-    // Total transmit packets
-    this->lastTransmitCount = this->transmitCount;
-    this->transmitCount = RadioLibInterface::instance->txGood;
-    this->transmitCount -= this->lastTransmitCount;
+        // Total transmit packets
+        this->lastTransmitCount = this->transmitCount;
+        this->transmitCount = RadioLibInterface::instance->txGood;
+        this->transmitCount -= this->lastTransmitCount;
 
-    // Total collided packets
-    this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
+        // Total collided packets
+        this->lastCollisionCount = this->collisionCount;
+        this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
+        this->collisionCount -= this->lastCollisionCount;
 
-    // Useful count is the received packets - dupes - bads
-    this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
+        // Useful count is the received packets - dupes - bads
+        this->lastUsefulCount = this->usefulCount;
+        this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
+        this->usefulCount -= this->lastUsefulCount;
+    }
 
     meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
     t.which_variant = meshtastic_Telemetry_error_metrics_tag;
     t.time = getTime();
-    // Some time period which the measures occur over as set by users
     t.variant.error_metrics = meshtastic_ErrorMetrics_init_zero;
 
+    // Some time period which the measures occur over as set by users
     t.variant.error_metrics.has_period = true;
     t.variant.error_metrics.period = (millis() - this->lastSentToMesh);
 
@@ -97,7 +125,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     // Then our collision rate is that count / the count of sensed packets
     if (this->sensedCount != 0) {
         t.variant.error_metrics.has_collision_rate = true;
-        t.variant.error_metrics.collision_rate = (float)this->collisionCount / (float)this->sensedCount;
+        t.variant.error_metrics.collision_rate = ((float)this->collisionCount / (float)this->sensedCount) * 100;
     }
 
     size_t numNodes = nodeDB->getNumMeshNodes();
@@ -105,14 +133,14 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         numNodes--;
     if (this->transmitCount != 0 && numNodes != 0) {
         t.variant.error_metrics.has_reachability = true;
-        t.variant.error_metrics.reachability = (float)this->usefulCount / ((float)this->transmitCount * (float)numNodes);
+        t.variant.error_metrics.reachability = ((float)this->usefulCount / ((float)this->transmitCount * (float)numNodes)) * 100;
     } else {
         t.variant.error_metrics.has_reachability = false;
     }
 
     if (this->receivedCount != 0) {
         t.variant.error_metrics.has_usefulness = true;
-        t.variant.error_metrics.usefulness = (float)this->usefulCount / (float)this->receivedCount;
+        t.variant.error_metrics.usefulness = ((float)this->usefulCount / (float)this->receivedCount) * 100;
     } else {
         t.variant.error_metrics.has_usefulness = false;
     }
@@ -127,7 +155,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     // the following might be better done already in the grafana dashboard
     if (this->avg_tx_airutil != 0) {
         t.variant.error_metrics.has_avg_tx_air_util = true;
-        t.variant.error_metrics.avg_tx_air_util = this->avg_tx_airutil;
+        t.variant.error_metrics.avg_tx_air_util = this->avg_tx_airutil * 100;
     } else {
         t.variant.error_metrics.has_avg_tx_air_util = false;
     }
@@ -163,5 +191,9 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         LOG_INFO("Send packet to mesh");
         service->sendToMesh(p, RX_SRC_LOCAL, true);
     }
+
+    // Reset values
+    this->avg_tx_airutil = 0.0f;
+    this->avg_tx_delay = 0.0f;
     return true;
 }
