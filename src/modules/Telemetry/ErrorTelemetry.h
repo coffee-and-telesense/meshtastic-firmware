@@ -3,8 +3,7 @@
 #include "NodeDB.h"
 #include "PhoneAPI.h"
 #include "ProtobufModule.h"
-#include "RadioLibInterface.h"
-#include "airtime.h"
+#include "main.h"
 #include <OLEDDisplay.h>
 #include <OLEDDisplayUi.h>
 #include <cstdint>
@@ -16,8 +15,8 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
 
   public:
     ErrorTelemetryModule()
-        : concurrency::OSThread("DeviceTelemetry"),
-          ProtobufModule("DeviceTelemetry", meshtastic_PortNum_TELEMETRY_APP, &meshtastic_Telemetry_msg)
+        : concurrency::OSThread("ErrorTelemetry"),
+          ProtobufModule("ErrorTelemetry", meshtastic_PortNum_TELEMETRY_APP, &meshtastic_Telemetry_msg)
     {
         uptimeWrapCount = 0;
         uptimeLastMs = millis();
@@ -32,21 +31,18 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     */
     virtual bool wantPacket(const meshtastic_MeshPacket *p) override
     {
-        // Increment sensed packet count because we have seen a packet
-        this->receivedCount++;
-
         // Get the average delay and add it to a running mean
         // New average = old average * (n-1)/n + new value /n
-        this->avg_tx_delay = this->avg_tx_delay * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
-                             ((float)p->tx_after / (float)this->receivedCount);
+        if (this->receivedCount != 0) {
+            this->avg_tx_delay = this->avg_tx_delay * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
+                                 ((float)p->tx_after / (float)this->receivedCount);
+        }
 
         // Get the tx util and add it to a running mean
-        this->avg_tx_airutil = this->avg_tx_airutil * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
-                               (utilizationTXPercent() / (float)this->receivedCount);
-
-        // Increment useful count if we have not seen this sequence number before
-        if (!wasSeenRecently(p))
-            this->usefulCount++;
+        if (this->receivedCount != 0) {
+            this->avg_tx_airutil = this->avg_tx_airutil * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
+                                   (airTime->utilizationTXPercent() / (float)this->receivedCount);
+        }
 
         // Return false since we aren't doing anything special, just counting.
         return false;

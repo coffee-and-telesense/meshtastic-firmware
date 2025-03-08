@@ -15,12 +15,6 @@ PB_BIND(meshtastic_NodeFilter, meshtastic_NodeFilter, AUTO)
 PB_BIND(meshtastic_NodeHighlight, meshtastic_NodeHighlight, AUTO)
 
 
-PB_BIND(meshtastic_GeoPoint, meshtastic_GeoPoint, AUTO)
-
-
-PB_BIND(meshtastic_Map, meshtastic_Map, AUTO)
-
-
 
 
 

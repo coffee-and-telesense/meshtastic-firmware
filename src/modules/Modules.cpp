@@ -63,6 +63,9 @@
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY
 #include "modules/Telemetry/PowerTelemetry.h"
 #endif
+#if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
+#include "modules/Telemetry/ErrorTelemetry.h"
+#endif
 #ifdef ARCH_ESP32
 #if defined(USE_SX1280) && !MESHTASTIC_EXCLUDE_AUDIO
 #include "modules/esp32/AudioModule.h"
@@ -189,6 +192,9 @@ void setupModules()
 #endif
 #if HAS_TELEMETRY
         new DeviceTelemetryModule();
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
+        new ErrorTelemetryModule();
+#endif
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
         new EnvironmentTelemetryModule();

@@ -21,6 +21,7 @@
 
 // Use Error Telemetry
 #define ERROR_METRICS 1
+#define MESHTASTIC_EXCLUDE_ERROR_TELEMETRY 0
 
 // Minimize the image's features
 #define MESHTASTIC_EXCLUDE_MQTT 1
