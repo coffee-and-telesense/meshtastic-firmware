@@ -269,7 +269,7 @@ void SimRadio::startReceive(meshtastic_MeshPacket *p)
     uint32_t airtimeMsec = getPacketTime(p);
     notifyLater(airtimeMsec, ISR_RX, false); // Model the time it is busy receiving
 #else
-#ifdef ERROR_METTRICS
+#ifdef ERROR_METRICS
     if (isActivelyReceiving()) {
         rxBad++;
         packetPool.release(receivingPacket);
