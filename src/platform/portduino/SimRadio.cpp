@@ -1,7 +1,9 @@
 #include "SimRadio.h"
 #include "MeshService.h"
 #include "Router.h"
-
+#ifdef ERROR_METTRICS
+#include "modules/Telemetry/ErrorTelemetry.h"
+#endif
 SimRadio::SimRadio() : NotifiedWorkerThread("SimRadio")
 {
     instance = this;
@@ -267,6 +269,23 @@ void SimRadio::startReceive(meshtastic_MeshPacket *p)
     uint32_t airtimeMsec = getPacketTime(p);
     notifyLater(airtimeMsec, ISR_RX, false); // Model the time it is busy receiving
 #else
+#ifdef ERROR_METTRICS
+    if (isActivelyReceiving()) {
+        rxBad++;
+        packetPool.release(receivingPacket);
+        receivingPacket = nullptr;
+        return;
+    } else if (sendingPacket) {
+        uint32_t airtimeLeft = tillRun(millis());
+        if (airtimeLeft <= 0) {
+            handleTransmitInterrupt(); // Finish sending first
+        } else if ((interval - airtimeLeft) > preambleTimeMsec) {
+            // Timing collision
+            ErrorTelemetryModule->timingCollisionCount++;
+            return;
+        }
+    }
+#endif
     isReceiving = true;
     receivingPacket = packetPool.allocCopy(*p);
     handleReceiveInterrupt(); // Simulate receiving the packet immediately

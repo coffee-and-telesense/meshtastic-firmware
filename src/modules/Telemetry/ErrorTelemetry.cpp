@@ -1,4 +1,3 @@
-
 #include "ErrorTelemetry.h"
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "Default.h"
@@ -80,12 +79,25 @@ meshtastic_MeshPacket *ErrorTelemetryModule::allocReply()
 
 meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
-    // TODO: write the protobuf
+    // Total sensed packets (bad and good)
+    this->lastSensedCount = this->sensedCount;
+    this->sensedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
+    this->sensedCount -= this->lastSensedCount;
+
+    // Total transmit packets
+    this->lastTransmitCount = this->transmitCount;
+    this->transmitCount = RadioLibInterface::instance->txGood;
+    this->transmitCount -= this->lastTransmitCount;
+
+    // Total collided packets
+    this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad;
+
     meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
     t.which_variant = meshtastic_Telemetry_error_metrics_tag;
     t.time = getTime();
-    t.period = 0; // Some time period which the measures occur over as set by users
+    // Some time period which the measures occur over as set by users
     t.variant.error_metrics = meshtastic_ErrorMetrics_init_zero;
+    t.variant.error_metrics.has_period = true;
     t.variant.error_metrics.has_collision_rate = true;
     t.variant.error_metrics.has_reachability = true;
     t.variant.error_metrics.has_usefulness = true;
@@ -93,12 +105,23 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     // the following might be better done already in the grafana dashboard
     t.variant.error_metrics.has_avg_tx_air_util = true;
 
-    t.variant.error_metrics.collision_rate = 0.0; // as calculated
-    t.variant.error_metrics.reachability = 0.0;
-    t.variant.error_metrics.usefulness = 0.0;
-    t.variant.error_metrics.avg_delay = 0.0;
+    t.variant.error_metrics.period = millis() - lastSentToMesh;
+
+    // Increment collision count if a power, frequency, spreading factor, and timing collide
+    // Then our collision rate is that count / the count of sensed packets
+    t.variant.error_metrics.collision_rate = (float)this->collisionCount / (float)this->sensedCount;
+
+    size_t numNodes = nodeDB->getNumMeshNodes();
+    if (numNodes > 0)
+        numNodes--;
+    t.variant.error_metrics.reachability = (float)this->usefulCount / ((float)this->transmitCount * (float)numNodes);
+
+    t.variant.error_metrics.usefulness = (float)this->usefulCount / (float)this->receivedCount;
+
+    t.variant.error_metrics.avg_delay = this->avg_tx_delay;
+
     // the following might be better done already in the grafana dashboard
-    t.variant.error_metrics.avg_tx_air_util = 0.0;
+    t.variant.error_metrics.avg_tx_air_util = this->avg_tx_airutil;
 
     return t;
 }
@@ -106,11 +129,10 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 {
     meshtastic_Telemetry telemetry = getErrorTelemetry();
-    // TODO: Rewrite log message
-    // LOG_INFO("Send: air_util_tx=%f, channel_utilization=%f, battery_level=%i, voltage=%f, uptime=%i",
-    //          telemetry.variant.device_metrics.air_util_tx, telemetry.variant.device_metrics.channel_utilization,
-    //          telemetry.variant.device_metrics.battery_level, telemetry.variant.device_metrics.voltage,
-    //          telemetry.variant.device_metrics.uptime_seconds);
+    LOG_INFO("Send: period=%f, collision_rate=%f, reachability=%f, usefulness=%f, avg_delay=%f, avg_tx_air_util=%f",
+             telemetry.variant.error_metrics.period, telemetry.variant.error_metrics.collision_rate,
+             telemetry.variant.error_metrics.reachability, telemetry.variant.error_metrics.avg_delay,
+             telemetry.variant.error_metrics.avg_tx_air_util);
 
     meshtastic_MeshPacket *p = allocDataProtobuf(telemetry);
     p->to = dest;
@@ -123,6 +145,7 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         service->sendToPhone(p);
     } else {
         LOG_INFO("Send packet to mesh");
+        this->lastSentToMesh = millis();
         service->sendToMesh(p, RX_SRC_LOCAL, true);
     }
     return true;

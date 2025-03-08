@@ -1,9 +1,13 @@
 #pragma once
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "NodeDB.h"
+#include "PhoneAPI.h"
 #include "ProtobufModule.h"
+#include "RadioLibInterface.h"
+#include "airtime.h"
 #include <OLEDDisplay.h>
 #include <OLEDDisplayUi.h>
+#include <cstdint>
 
 class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModule<meshtastic_Telemetry>
 {
@@ -28,39 +32,27 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     */
     virtual bool wantPacket(const meshtastic_MeshPacket *p) override
     {
-        // TODO:
-        //  need frequencies to check for freq collision for frequency collision in collision rate
-        //  need speading factor to check if new packet == last packet sf for sf collision in collision rate
-        //  need received time `millis()` to check for timing collision
-        //  need number of preamble symbols to calculate timing collision
-        //  need minimum received sensitivity to count sensed nodes for # collisions / # sensed
-        //  need delay in ms
-        //  need the tx air util for average tx air util
-        //  need the seen sequence numbers to check if this is unseen and count useful
-
-        // maybe count routing error types and report on each of them?
-        if (p->rx_rssi != 0) {
-            this->lastRxRssi = p->rx_rssi;
-        }
-
-        if (p->rx_snr > 0) {
-            this->lastRxSnr = p->rx_snr;
-        }
+        // Increment sensed packet count because we have seen a packet
+        this->receivedCount++;
 
         // Get the average delay and add it to a running mean
+        // New average = old average * (n-1)/n + new value /n
+        this->avg_tx_delay = this->avg_tx_delay * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
+                             ((float)p->tx_after / (float)this->receivedCount);
 
         // Get the tx util and add it to a running mean
+        this->avg_tx_airutil = this->avg_tx_airutil * ((float)(this->receivedCount - 1) / (float)(this->receivedCount)) +
+                               (utilizationTXPercent() / (float)this->receivedCount);
 
         // Increment useful count if we have not seen this sequence number before
-
-        // Increment sensed packet count if the received rssi > minimum sensitivity
-
-        // Increment collision count if a power, frequency, spreading factor, and timing collide
-        // Then our collision rate is that count / the count of sensed packets
+        if (!wasSeenRecently(p))
+            this->usefulCount++;
 
         // Return false since we aren't doing anything special, just counting.
         return false;
     }
+
+    uint32_t timingCollisionCount = 0;
 
   protected:
     /** Called to handle a particular incoming message
@@ -91,7 +83,12 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t usefulCount = 0;
     uint32_t collisionCount = 0;
     uint32_t sensedCount = 0;
+    uint32_t lastSensedCount = 0;
     uint32_t receivedCount = 0;
+    uint32_t transmitCount = 0;
+    uint32_t lastTransmitCount = 0;
+    float avg_tx_delay = 0.0f;
+    float avg_tx_airutil = 0.0f;
 
     void refreshUptime()
     {
