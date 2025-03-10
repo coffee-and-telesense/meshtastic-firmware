@@ -158,6 +158,7 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
     // 0x7C-0x7F Reserved for future purposes
 
     for (addr.address = 8; addr.address < 120; addr.address++) {
+    LOG_DEBUG("Scan address 0x%x", (uint8_t)addr.address);
         if (asize != 0) {
             if (!in_array(address, asize, (uint8_t)addr.address))
                 continue;

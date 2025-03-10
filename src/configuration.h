@@ -155,6 +155,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MLX90614_ADDR_DEF 0x5A
 #define CGRADSENS_ADDR 0x66
 #define SCD30_ADDR 0x61
+#define SPS30_ADDR 0x69
 
 // -----------------------------------------------------------------------------
 // ACCELEROMETER

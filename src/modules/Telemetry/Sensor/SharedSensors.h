@@ -9,5 +9,10 @@
 extern SCD30Sensor scd30Sensor;
 #endif
 
+#if USE_SPS30
+#include "SPS30Sensor.h"
+extern SPS30Sensor sps30Sensor;
+#endif
+
 #endif
 #endif

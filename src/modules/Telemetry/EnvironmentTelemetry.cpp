@@ -69,6 +69,13 @@ SCD30Sensor scd30Sensor;
 #include "Sensor/SharedSensors.h"
 #endif
 
+// #if !SHARING_SENSORS && USE_SPS30
+// #include "Sensor/SPS30Sensor.h"
+// SPS30Sensor sps30Sensor;
+// #else
+// #include "Sensor/SharedSensors.h"
+// #endif
+
 #endif
 #ifdef T1000X_SENSOR_EN
 #include "Sensor/T1000xSensor.h"

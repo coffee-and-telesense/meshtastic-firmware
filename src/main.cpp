@@ -613,6 +613,7 @@ void setup()
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::CGRADSENS, meshtastic_TelemetrySensorType_RADSENS);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::DFROBOT_RAIN, meshtastic_TelemetrySensorType_DFROBOT_RAIN);
     scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::SCD30, meshtastic_TelemetrySensorType_SCD30);
+    scannerToSensorsMap(i2cScanner, ScanI2C::DeviceType::SPS30, meshtastic_TelemetrySensorType_SPS30);
 
     i2cScanner.reset();
 #endif

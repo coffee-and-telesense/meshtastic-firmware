@@ -8,5 +8,9 @@
 SCD30Sensor scd30Sensor;
 #endif
 
+#if USE_SPS30
+SPS30Sensor sps30Sensor;
+#endif
+
 #endif
 #endif
