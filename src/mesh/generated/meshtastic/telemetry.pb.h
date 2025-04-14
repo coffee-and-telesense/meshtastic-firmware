@@ -306,9 +306,13 @@ typedef struct _meshtastic_ErrorMetrics {
     /* How often packets collided (percent) over the module's time period */
     bool has_collision_rate;
     float collision_rate;
-    /* How many nodes can be reached (percent) over the module's time period */
-    bool has_reachability;
-    float reachability;
+    /* How many nodes are online out of total nodes (percent) for the modules time
+ period */
+    bool has_node_reach;
+    float node_reach;
+    /* How many nodes are there total? */
+    bool has_num_nodes;
+    uint32_t num_nodes;
     /* How many packets contain new data in all packets seen (percent) over the
  module's time period */
     bool has_usefulness;
@@ -317,10 +321,6 @@ typedef struct _meshtastic_ErrorMetrics {
  period */
     bool has_avg_delay;
     uint32_t avg_delay;
-    /* Average air transmit air utilization (percent) over the module's time
- period */
-    bool has_avg_tx_air_util;
-    float avg_tx_air_util;
     /* Time period (seconds) for measurements which occur, also the timeout for
  how often the module collects and sends data */
     bool has_period;
@@ -462,10 +462,10 @@ extern "C" {
 #define meshtastic_HealthMetrics_spO2_tag        2
 #define meshtastic_HealthMetrics_temperature_tag 3
 #define meshtastic_ErrorMetrics_collision_rate_tag 1
-#define meshtastic_ErrorMetrics_reachability_tag 2
-#define meshtastic_ErrorMetrics_usefulness_tag   3
-#define meshtastic_ErrorMetrics_avg_delay_tag    4
-#define meshtastic_ErrorMetrics_avg_tx_air_util_tag 5
+#define meshtastic_ErrorMetrics_node_reach_tag   2
+#define meshtastic_ErrorMetrics_num_nodes_tag    3
+#define meshtastic_ErrorMetrics_usefulness_tag   4
+#define meshtastic_ErrorMetrics_avg_delay_tag    5
 #define meshtastic_ErrorMetrics_period_tag       6
 #define meshtastic_Telemetry_time_tag            1
 #define meshtastic_Telemetry_device_metrics_tag  2
@@ -565,10 +565,10 @@ X(a, STATIC,   OPTIONAL, FLOAT,    temperature,       3)
 
 #define meshtastic_ErrorMetrics_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, FLOAT,    collision_rate,    1) \
-X(a, STATIC,   OPTIONAL, FLOAT,    reachability,      2) \
-X(a, STATIC,   OPTIONAL, FLOAT,    usefulness,        3) \
-X(a, STATIC,   OPTIONAL, UINT32,   avg_delay,         4) \
-X(a, STATIC,   OPTIONAL, FLOAT,    avg_tx_air_util,   5) \
+X(a, STATIC,   OPTIONAL, FLOAT,    node_reach,        2) \
+X(a, STATIC,   OPTIONAL, UINT32,   num_nodes,         3) \
+X(a, STATIC,   OPTIONAL, FLOAT,    usefulness,        4) \
+X(a, STATIC,   OPTIONAL, UINT32,   avg_delay,         5) \
 X(a, STATIC,   OPTIONAL, UINT32,   period,            6)
 #define meshtastic_ErrorMetrics_CALLBACK NULL
 #define meshtastic_ErrorMetrics_DEFAULT NULL
@@ -624,7 +624,7 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_AirQualityMetrics_size        80
 #define meshtastic_DeviceMetrics_size            27
 #define meshtastic_EnvironmentMetrics_size       106
-#define meshtastic_ErrorMetrics_size             32
+#define meshtastic_ErrorMetrics_size             33
 #define meshtastic_HealthMetrics_size            11
 #define meshtastic_LocalStats_size               60
 #define meshtastic_Nau7802Config_size            16

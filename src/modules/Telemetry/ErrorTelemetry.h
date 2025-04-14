@@ -72,14 +72,8 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t lastSentToMesh = 0;
 
     uint32_t usefulCount = 0;
-    uint32_t lastUsefulCount = 0;
     uint32_t collisionCount = 0;
-    uint32_t lastCollisionCount = 0;
     uint32_t sensedCount = 0;
-    uint32_t lastSensedCount = 0;
-    uint32_t lastReceivedCount = 0;
-    uint32_t transmitCount = 0;
-    uint32_t lastTransmitCount = 0;
 
     void refreshUptime()
     {
