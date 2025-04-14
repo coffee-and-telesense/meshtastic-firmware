@@ -87,29 +87,19 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
     if (RadioLibInterface::instance) {
         // Total sensed packets (good and bad)
-        // this->lastSensedCount = this->sensedCount;
         this->sensedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
-        // this->sensedCount -= this->lastSensedCount;
 
         // Total received packets (good)
-        // this->lastReceivedCount = this->receivedCount;
         this->receivedCount = RadioLibInterface::instance->rxGood;
-        // this->receivedCount -= this->lastReceivedCount;
 
         // Total transmit packets
-        // this->lastTransmitCount = this->transmitCount;
         this->transmitCount = RadioLibInterface::instance->txGood;
-        // this->transmitCount -= this->lastTransmitCount;
 
         // Total collided packets
-        // this->lastCollisionCount = this->collisionCount;
         this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
-        // this->collisionCount -= this->lastCollisionCount;
 
         // Useful count is the received packets - dupes - bads
-        // this->lastUsefulCount = this->usefulCount;
         this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
-        // this->usefulCount -= this->lastUsefulCount;
     }
 
     meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
@@ -126,14 +116,17 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     if (this->sensedCount != 0) {
         t.variant.error_metrics.has_collision_rate = true;
         t.variant.error_metrics.collision_rate = ((float)this->collisionCount / (float)this->sensedCount) * 100;
+    } else {
+        t.variant.error_metrics.has_collision_rate = false;
     }
 
     size_t numNodes = nodeDB->getNumMeshNodes();
     if (numNodes > 0)
         numNodes--;
     if (this->transmitCount != 0 && numNodes != 0) {
+        // todo: fix this measurement, it is reporting 200%
         t.variant.error_metrics.has_reachability = true;
-        t.variant.error_metrics.reachability = ((float)this->usefulCount / ((float)this->transmitCount * (float)numNodes)) * 100;
+        t.variant.error_metrics.reachability = ((float)this->usefulCount / (float)numNodes) * 100;
     } else {
         t.variant.error_metrics.has_reachability = false;
     }
@@ -145,16 +138,18 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         t.variant.error_metrics.has_usefulness = false;
     }
 
-    if (this->avg_tx_delay != 0) {
+    if (this->total_tx_delay != 0.0 && this->count_avg_delay != 0) {
         t.variant.error_metrics.has_avg_delay = true;
-        t.variant.error_metrics.avg_delay = this->avg_tx_delay;
+        t.variant.error_metrics.avg_delay = (this->total_tx_delay / this->count_avg_delay);
     } else {
-        t.variant.error_metrics.has_avg_delay = false;
+        // Send 0 ms to report no average delay
+        t.variant.error_metrics.has_avg_delay = true;
+        t.variant.error_metrics.avg_delay = 0;
     }
 
     // the following might be better done already in the grafana dashboard
-    t.variant.error_metrics.has_avg_tx_air_util = true;
-    t.variant.error_metrics.avg_tx_air_util = airTime->utilizationTXPercent();
+    t.variant.error_metrics.has_avg_tx_air_util = false;
+    // t.variant.error_metrics.avg_tx_air_util = airTime->utilizationTXPercent();
 
     return t;
 }
@@ -164,15 +159,13 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     meshtastic_Telemetry telemetry = getErrorTelemetry();
     LOG_INFO("Send: period=%zu", telemetry.variant.error_metrics.period);
     if (telemetry.variant.error_metrics.has_collision_rate)
-        LOG_INFO("      collision_rate=%f", telemetry.variant.error_metrics.collision_rate);
+        LOG_INFO("      collision_rate=%.2f\%", telemetry.variant.error_metrics.collision_rate);
     if (telemetry.variant.error_metrics.has_reachability)
-        LOG_INFO("      reachability=%f", telemetry.variant.error_metrics.reachability);
+        LOG_INFO("      reachability=%.2f\%", telemetry.variant.error_metrics.reachability);
     if (telemetry.variant.error_metrics.has_usefulness)
-        LOG_INFO("      usefulness=%f", telemetry.variant.error_metrics.usefulness);
+        LOG_INFO("      usefulness=%.2f\%", telemetry.variant.error_metrics.usefulness);
     if (telemetry.variant.error_metrics.has_avg_delay)
-        LOG_INFO("      avg_delay=%zu", telemetry.variant.error_metrics.avg_delay);
-    if (telemetry.variant.error_metrics.has_avg_tx_air_util)
-        LOG_INFO("      avg_tx_air_util=%f", telemetry.variant.error_metrics.avg_tx_air_util);
+        LOG_INFO("      avg_delay=%zu ms", telemetry.variant.error_metrics.avg_delay);
 
     meshtastic_MeshPacket *p = allocDataProtobuf(telemetry);
     p->to = dest;
@@ -189,8 +182,8 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     }
 
     // Reset values
-    this->avg_tx_delay = 0;
-    this->timingCollisionCount = 0;
+    this->total_tx_delay = 0;
     this->count_avg_delay = 0;
+    this->timingCollisionCount = 0;
     return true;
 }

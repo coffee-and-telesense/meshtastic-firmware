@@ -302,13 +302,13 @@ void RadioLibInterface::setTransmitDelay()
         unsigned long now = millis();
         p->tx_after = min(max(p->tx_after + add_delay, now + add_delay), now + 2 * getTxDelayMsecWeightedWorst(p->rx_snr));
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-        // Get the average delay and add it to a running mean
-        // New average = old average * (n-1)/n + new value /n
+        // Sum the average tx delays to get a total
         if (errorTelemetryModule->receivedCount != 0) {
-            errorTelemetryModule->avg_tx_delay =
-                errorTelemetryModule->avg_tx_delay *
-                    ((errorTelemetryModule->count_avg_delay - 1) / errorTelemetryModule->count_avg_delay) +
-                (p->tx_after / errorTelemetryModule->count_avg_delay);
+            LOG_DEBUG("Packet delayed, changing stats for error rate.");
+            errorTelemetryModule->total_tx_delay += p->tx_after;
+            errorTelemetryModule->count_avg_delay++;
+            LOG_DEBUG("    total delay:%d counted delays:%d", errorTelemetryModule->total_tx_delay,
+                      errorTelemetryModule->count_avg_delay);
         }
 #endif
         notifyLater(p->tx_after - now, TRANSMIT_DELAY_COMPLETED, false);

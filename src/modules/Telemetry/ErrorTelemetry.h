@@ -42,7 +42,7 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
 
     uint32_t timingCollisionCount = 0;
     uint32_t count_avg_delay = 0;
-    uint32_t avg_tx_delay = 0.0f;
+    uint32_t total_tx_delay = 0.0;
     uint32_t receivedCount = 0;
 
   protected:
