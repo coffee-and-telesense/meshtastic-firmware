@@ -96,6 +96,8 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
 
         // Useful count is the received packets - dupes - bads
+        LOG_DEBUG("Useful count calculation: %zu %zu %zu", this->receivedCount, router->rxDupe,
+                  RadioLibInterface::instance->rxBad);
         this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
     }
 
@@ -112,7 +114,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     // Then our collision rate is that count / the count of sensed packets
     if (this->sensedCount != 0) {
         t.variant.error_metrics.has_collision_rate = true;
-        LOG_DEBUG("COLLISION DEBUG: %f %f", (float)this->collisionCount, (float)this->sensedCount);
+        LOG_DEBUG("Collision rate calc: %f / %f", (float)this->collisionCount, (float)this->sensedCount);
         t.variant.error_metrics.collision_rate = ((float)this->collisionCount / (float)this->sensedCount) * 100.0f;
     } else {
         t.variant.error_metrics.has_collision_rate = false;
@@ -140,7 +142,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 
     if (this->receivedCount != 0) {
         t.variant.error_metrics.has_usefulness = true;
-        LOG_DEBUG("USEFUL DEBUG: %f %f", (float)this->usefulCount, (float)this->receivedCount);
+        LOG_DEBUG("Useful rate calc: %f / %f", (float)this->usefulCount, (float)this->receivedCount);
         t.variant.error_metrics.usefulness = ((float)this->usefulCount / (float)this->receivedCount) * 100.0f;
     } else {
         t.variant.error_metrics.has_usefulness = false;
