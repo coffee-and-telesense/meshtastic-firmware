@@ -1,5 +1,6 @@
 #include "ErrorTelemetry.h"
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
+#include "DebugConfiguration.h"
 #include "Default.h"
 #include "MeshService.h"
 #include "NodeDB.h"
@@ -86,17 +87,25 @@ meshtastic_MeshPacket *ErrorTelemetryModule::allocReply()
 meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
     if (RadioLibInterface::instance) {
-        // Total sensed packets (good and bad)
-        this->sensedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
+        // Total received packets (good and bad)
+        LOG_DEBUG("Sensed & Received count = %zu rxBads + %zu rxGoods", RadioLibInterface::instance->rxBad,
+                  RadioLibInterface::instance->rxGood);
+        this->receivedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
 
-        // Total received packets (good)
-        this->receivedCount = RadioLibInterface::instance->rxGood;
+        // Total sensed packets (good and bad)
+        // Assuming that sensed packets are the same as packets the antenna actually picks up, this is true.
+        // Need to double check my understanding with a antenna person.
+        this->sensedCount = this->receivedCount;
 
         // Total collided packets
+        LOG_DEBUG("Collision count = %zu timing collisions + %zu rxBads + %zu txRelayCancels", this->timingCollisionCount,
+                  RadioLibInterface::instance->rxBad, router->txRelayCanceled);
         this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
 
         // Useful count is the received packets - dupes - bads
-        LOG_DEBUG("Useful count calculation: %zu %zu %zu", this->receivedCount, router->rxDupe,
+        // TODO: problem is that rxBads are being used in many different contexts for packet receptions
+        // so: distinguish types of bads, add method to count sensed signals that may not be packets(?) for sensedCount
+        LOG_DEBUG("Useful count = %zu received - %zu rxDupes - %zu rxBads", this->receivedCount, router->rxDupe,
                   RadioLibInterface::instance->rxBad);
         this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
     }
@@ -114,7 +123,8 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     // Then our collision rate is that count / the count of sensed packets
     if (this->sensedCount != 0) {
         t.variant.error_metrics.has_collision_rate = true;
-        LOG_DEBUG("Collision rate calc: %f / %f", (float)this->collisionCount, (float)this->sensedCount);
+        LOG_DEBUG("Collision rate calc: (%.2f collisions / %.2f sensed) * 100.0f", (float)this->collisionCount,
+                  (float)this->sensedCount);
         t.variant.error_metrics.collision_rate = ((float)this->collisionCount / (float)this->sensedCount) * 100.0f;
     } else {
         t.variant.error_metrics.has_collision_rate = false;
@@ -126,8 +136,9 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         numNodes--;
     if (numOnline > 0)
         numOnline--;
-    if (numOnline != 0 && numNodes != 0) {
+    if (numNodes != 0) {
         t.variant.error_metrics.has_node_reach = true;
+        LOG_DEBUG("Node reach = (%.2f online / %.2f total) * 100.0f", (float)numOnline, (float)numNodes);
         t.variant.error_metrics.node_reach = ((float)numOnline / (float)numNodes) * 100.0f;
     } else {
         t.variant.error_metrics.has_node_reach = false;
@@ -142,14 +153,16 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 
     if (this->receivedCount != 0) {
         t.variant.error_metrics.has_usefulness = true;
-        LOG_DEBUG("Useful rate calc: %f / %f", (float)this->usefulCount, (float)this->receivedCount);
+        LOG_DEBUG("Useful rate = (%.2f useful pkts / %.2f received pkts) * 100.0f", (float)this->usefulCount,
+                  (float)this->receivedCount);
         t.variant.error_metrics.usefulness = ((float)this->usefulCount / (float)this->receivedCount) * 100.0f;
     } else {
         t.variant.error_metrics.has_usefulness = false;
     }
 
-    if (this->total_tx_delay != 0.0 && this->count_avg_delay != 0) {
+    if (this->count_avg_delay != 0) {
         t.variant.error_metrics.has_avg_delay = true;
+        LOG_DEBUG("Avg delay = (%zu total delay ms / %zu total count of delays)", this->total_tx_delay, this->count_avg_delay);
         t.variant.error_metrics.avg_delay = (this->total_tx_delay / this->count_avg_delay);
     } else {
         // Send 0 ms to report no average delay
