@@ -16,15 +16,8 @@
 
 int32_t ErrorTelemetryModule::runOnce()
 {
-    moduleConfig.telemetry.error_measurement_enabled = 1;
-    moduleConfig.telemetry.error_update_interval = 60;
-
-    if (!(moduleConfig.telemetry.error_measurement_enabled)) {
-        // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
+    if (!moduleConfig.telemetry.error_measurement_enabled)
         return disable();
-    } else {
-        LOG_INFO("Error metrics telemetry: init");
-    }
     refreshUptime();
     bool isImpoliteRole =
         IS_ONE_OF(config.device.role, meshtastic_Config_DeviceConfig_Role_SENSOR, meshtastic_Config_DeviceConfig_Role_ROUTER);
@@ -54,6 +47,12 @@ bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
     if (t->which_variant == meshtastic_Telemetry_error_metrics_tag) {
 #ifdef DEBUG_PORT
         const char *sender = getSenderShortName(mp);
+
+        LOG_INFO("(Received from %s): period=%zus, collision_rate=%.2f%%, node_reach=%.2%%, num_nodes=%zu,", sender,
+                 t->variant.error_metrics.period, t->variant.error_metrics.collision_rate, t->variant.error_metrics.node_reach,
+                 t->variant.error_metrics.num_nodes);
+        LOG_INFO("                    usefulness=%.2f%%, avg_delay=%zums", t->variant.error_metrics.usefulness,
+                 t->variant.error_metrics.avg_delay);
 #endif
         nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
     }
