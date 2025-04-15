@@ -16,6 +16,10 @@
 
 int32_t ErrorTelemetryModule::runOnce()
 {
+    // Set enabled and a default timeout, otherwise export-config with python-cli not working
+    // TODO: make this actually function outside of this hacky fix
+    moduleConfig.telemetry.error_measurement_enabled = true;
+    moduleConfig.telemetry.error_update_interval = default_telemetry_broadcast_interval_secs;
     if (!moduleConfig.telemetry.error_measurement_enabled)
         return disable();
     refreshUptime();
