@@ -429,14 +429,12 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
                 break;
 
             case ICM20948_ADDR:     // same as BMX160_ADDR
-                registerValue = getRegisterValue(ScanI2CTwoWire::RegisterLocation(addr, 0x00), 1); //uknoinw register address to check
-                if(registerValue == 0x33) { //unknown register valuew
+                registerValue = getRegisterValue(ScanI2CTwoWire::RegisterLocation(addr, 0xD002), 1);
+                if(registerValue == 00080000) {
+                    //whats the ascii val wrapped in an uin18_t
                     type = SPS30;
                     logFoundDevice("SPS30", (uint8_t)addr.address);
                     break;
-                } else {
-                    type = ICM20948;
-                    logFoundDevice("ICM20948", (uint8_t)addr.address);
                 }
             case ICM20948_ADDR_ALT: // same as MPU6050_ADDR
                 registerValue = getRegisterValue(ScanI2CTwoWire::RegisterLocation(addr, 0x00), 1);

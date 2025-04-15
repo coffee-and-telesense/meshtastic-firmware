@@ -85,7 +85,7 @@ typedef enum _meshtastic_TelemetrySensorType {
     /* DFRobot Gravity tipping bucket rain gauge */
     meshtastic_TelemetrySensorType_DFROBOT_RAIN = 35,
     /* SPS30, air quality */
-    meshtastic_TelemetrySensorTYpe_SPS30 = 36
+    meshtastic_TelemetrySensorTYpe_SPS30 = 36,
 } meshtastic_TelemetrySensorType;
 
 /* Struct definitions */
