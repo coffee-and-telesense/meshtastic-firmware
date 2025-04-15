@@ -16,6 +16,10 @@
 
 int32_t ErrorTelemetryModule::runOnce()
 {
+    // set enabled and a timeout of 120s to begin
+    moduleConfig.telemetry.error_measurement_enabled = true;
+    moduleConfig.telemetry.error_update_interval = 120;
+
     if (!moduleConfig.telemetry.error_measurement_enabled)
         return disable();
     refreshUptime();
@@ -53,6 +57,11 @@ bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                  t->variant.error_metrics.num_nodes);
         LOG_INFO("                    usefulness=%.2f%%, avg_delay=%zums", t->variant.error_metrics.usefulness,
                  t->variant.error_metrics.avg_delay);
+        LOG_INFO("                    no_route=%zu, naks=%zu,", t->variant.error_metrics.noroute, t->variant.error_metrics.naks);
+        LOG_INFO("                    timeouts=%zu, max retransmits=%zu,", t->variant.error_metrics.timeouts,
+                 t->variant.error_metrics.max_retransmit);
+        LOG_INFO("                    no channel=%zu, too large=%zu,", t->variant.error_metrics.no_channel,
+                 t->variant.error_metrics.too_large);
 #endif
         nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
     }
@@ -169,6 +178,20 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         t.variant.error_metrics.avg_delay = 0;
     }
 
+    // Counts of specific errors
+    t.variant.error_metrics.has_noroute = true;
+    t.variant.error_metrics.noroute = this->noRouteCount;
+    t.variant.error_metrics.has_naks = true;
+    t.variant.error_metrics.naks = this->nakCount;
+    t.variant.error_metrics.has_timeouts = true;
+    t.variant.error_metrics.timeouts = this->timeoutCount;
+    t.variant.error_metrics.has_max_retransmit = true;
+    t.variant.error_metrics.max_retransmit = this->maxReTxCount;
+    t.variant.error_metrics.has_no_channel = true;
+    t.variant.error_metrics.no_channel = this->noChCount;
+    t.variant.error_metrics.has_too_large = true;
+    t.variant.error_metrics.too_large = this->largeCount;
+
     return t;
 }
 
@@ -186,6 +209,11 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         LOG_INFO("      usefulness=%.2f%%", telemetry.variant.error_metrics.usefulness);
     if (telemetry.variant.error_metrics.has_avg_delay)
         LOG_INFO("      avg_delay=%zums", telemetry.variant.error_metrics.avg_delay);
+    LOG_INFO("      no_route=%zu, naks=%zu,", telemetry.variant.error_metrics.noroute, telemetry.variant.error_metrics.naks);
+    LOG_INFO("      timeouts=%zu, max retransmits=%zu,", telemetry.variant.error_metrics.timeouts,
+             telemetry.variant.error_metrics.max_retransmit);
+    LOG_INFO("      no channel=%zu, too large=%zu,", telemetry.variant.error_metrics.no_channel,
+             telemetry.variant.error_metrics.too_large);
 
     meshtastic_MeshPacket *p = allocDataProtobuf(telemetry);
     p->to = dest;

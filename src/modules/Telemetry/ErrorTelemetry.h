@@ -22,7 +22,7 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
         uptimeWrapCount = 0;
         uptimeLastMs = millis();
         nodeStatusObserver.observe(&nodeStatus->onNewStatus);
-        setIntervalFromNow(45 * 2000); // Warm up a bit
+        setIntervalFromNow(120 * 1000); // Warm up a bit
     }
     virtual bool wantUIFrame() { return false; }
 
@@ -44,6 +44,14 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t count_avg_delay = 0;
     uint32_t total_tx_delay = 0.0;
     uint32_t receivedCount = 0;
+
+    // Routing error counts
+    uint32_t noRouteCount = 0;
+    uint32_t nakCount = 0;
+    uint32_t timeoutCount = 0;
+    uint32_t maxReTxCount = 0;
+    uint32_t noChCount = 0;
+    uint32_t largeCount = 0;
 
   protected:
     /** Called to handle a particular incoming message

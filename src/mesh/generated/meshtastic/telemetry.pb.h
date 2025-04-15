@@ -325,6 +325,24 @@ typedef struct _meshtastic_ErrorMetrics {
  how often the module collects and sends data */
     bool has_period;
     uint32_t period;
+    /* Count of no route errors */
+    bool has_noroute;
+    uint32_t noroute;
+    /* Count of NAK errors */
+    bool has_naks;
+    uint32_t naks;
+    /* Count of timeout errors */
+    bool has_timeouts;
+    uint32_t timeouts;
+    /* Count of max retransmit errors */
+    bool has_max_retransmit;
+    uint32_t max_retransmit;
+    /* Count of no channel errors */
+    bool has_no_channel;
+    uint32_t no_channel;
+    /* Count of too large errors */
+    bool has_too_large;
+    uint32_t too_large;
 } meshtastic_ErrorMetrics;
 
 /* Types of Measurements the telemetry module is equipped to handle */
@@ -387,7 +405,7 @@ extern "C" {
 #define meshtastic_AirQualityMetrics_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
 #define meshtastic_LocalStats_init_default       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_HealthMetrics_init_default    {false, 0, false, 0, false, 0}
-#define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Telemetry_init_default        {0, 0, {meshtastic_DeviceMetrics_init_default}}
 #define meshtastic_Nau7802Config_init_default    {0, 0}
 #define meshtastic_DeviceMetrics_init_zero       {false, 0, false, 0, false, 0, false, 0, false, 0}
@@ -396,7 +414,7 @@ extern "C" {
 #define meshtastic_AirQualityMetrics_init_zero   {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
 #define meshtastic_LocalStats_init_zero          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_HealthMetrics_init_zero       {false, 0, false, 0, false, 0}
-#define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Telemetry_init_zero           {0, 0, {meshtastic_DeviceMetrics_init_zero}}
 #define meshtastic_Nau7802Config_init_zero       {0, 0}
 
@@ -467,6 +485,12 @@ extern "C" {
 #define meshtastic_ErrorMetrics_usefulness_tag   4
 #define meshtastic_ErrorMetrics_avg_delay_tag    5
 #define meshtastic_ErrorMetrics_period_tag       6
+#define meshtastic_ErrorMetrics_noroute_tag      7
+#define meshtastic_ErrorMetrics_naks_tag         8
+#define meshtastic_ErrorMetrics_timeouts_tag     9
+#define meshtastic_ErrorMetrics_max_retransmit_tag 10
+#define meshtastic_ErrorMetrics_no_channel_tag   11
+#define meshtastic_ErrorMetrics_too_large_tag    12
 #define meshtastic_Telemetry_time_tag            1
 #define meshtastic_Telemetry_device_metrics_tag  2
 #define meshtastic_Telemetry_environment_metrics_tag 3
@@ -569,7 +593,13 @@ X(a, STATIC,   OPTIONAL, FLOAT,    node_reach,        2) \
 X(a, STATIC,   OPTIONAL, UINT32,   num_nodes,         3) \
 X(a, STATIC,   OPTIONAL, FLOAT,    usefulness,        4) \
 X(a, STATIC,   OPTIONAL, UINT32,   avg_delay,         5) \
-X(a, STATIC,   OPTIONAL, UINT32,   period,            6)
+X(a, STATIC,   OPTIONAL, UINT32,   period,            6) \
+X(a, STATIC,   OPTIONAL, UINT32,   noroute,           7) \
+X(a, STATIC,   OPTIONAL, UINT32,   naks,              8) \
+X(a, STATIC,   OPTIONAL, UINT32,   timeouts,          9) \
+X(a, STATIC,   OPTIONAL, UINT32,   max_retransmit,   10) \
+X(a, STATIC,   OPTIONAL, UINT32,   no_channel,       11) \
+X(a, STATIC,   OPTIONAL, UINT32,   too_large,        12)
 #define meshtastic_ErrorMetrics_CALLBACK NULL
 #define meshtastic_ErrorMetrics_DEFAULT NULL
 
@@ -624,7 +654,7 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_AirQualityMetrics_size        80
 #define meshtastic_DeviceMetrics_size            27
 #define meshtastic_EnvironmentMetrics_size       106
-#define meshtastic_ErrorMetrics_size             33
+#define meshtastic_ErrorMetrics_size             69
 #define meshtastic_HealthMetrics_size            11
 #define meshtastic_LocalStats_size               60
 #define meshtastic_Nau7802Config_size            16

@@ -5,6 +5,8 @@
 #include "Router.h"
 #include "configuration.h"
 #include "main.h"
+#include "meshtastic/mesh.pb.h"
+#include "modules/Modules.h"
 
 RoutingModule *routingModule;
 
@@ -24,6 +26,32 @@ bool RoutingModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mesh
 
     printPacket("Routing sniffing", &mp);
     router->sniffReceived(&mp, r);
+
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
+    LOG_INFO("Checking for error reason %d", r->error_reason);
+    switch (r->error_reason) {
+    case meshtastic_Routing_Error_NO_ROUTE:
+        errorTelemetryModule->noRouteCount++;
+        break;
+    case meshtastic_Routing_Error_GOT_NAK:
+        errorTelemetryModule->nakCount++;
+        break;
+    case meshtastic_Routing_Error_TIMEOUT:
+        errorTelemetryModule->timeoutCount++;
+        break;
+    case meshtastic_Routing_Error_MAX_RETRANSMIT:
+        errorTelemetryModule->maxReTxCount++;
+        break;
+    case meshtastic_Routing_Error_NO_CHANNEL:
+        errorTelemetryModule->noChCount++;
+        break;
+    case meshtastic_Routing_Error_TOO_LARGE:
+        errorTelemetryModule->largeCount++;
+        break;
+    default:
+        break;
+    }
+#endif
 
     // FIXME - move this to a non promsicious PhoneAPI module?
     // Note: we are careful not to send back packets that started with the phone back to the phone
