@@ -16,10 +16,6 @@
 
 int32_t ErrorTelemetryModule::runOnce()
 {
-    // set enabled and a timeout of 120s to begin
-    moduleConfig.telemetry.error_measurement_enabled = true;
-    moduleConfig.telemetry.error_update_interval = 120;
-
     if (!moduleConfig.telemetry.error_measurement_enabled)
         return disable();
     refreshUptime();
