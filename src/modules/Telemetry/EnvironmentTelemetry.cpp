@@ -21,6 +21,7 @@
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR_EXTERNAL
 // Sensors
 #include "Sensor/AHT10.h"
+#include "Sensor/AS7265xSensor.h"
 #include "Sensor/BME280Sensor.h"
 #include "Sensor/BME680Sensor.h"
 #include "Sensor/BMP085Sensor.h"
@@ -61,6 +62,15 @@ DFRobotGravitySensor dfRobotGravitySensor;
 NAU7802Sensor nau7802Sensor;
 BMP3XXSensor bmp3xxSensor;
 CGRadSensSensor cgRadSens;
+AS7265XSensor as7265XSensor;
+
+#if !SHARING_SENSORS && USE_SCD30
+#include "Sensor/SCD30Sensor.h"
+SCD30Sensor scd30Sensor;
+#else
+#include "Sensor/SharedSensors.h"
+#endif
+
 #endif
 #ifdef T1000X_SENSOR_EN
 #include "Sensor/T1000xSensor.h"
@@ -163,6 +173,10 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 result = max17048Sensor.runOnce();
             if (cgRadSens.hasSensor())
                 result = cgRadSens.runOnce();
+            if (scd30Sensor.hasSensor())
+                result = scd30Sensor.runOnce();
+            if (as7265XSensor.hasSensor())
+                result = as7265XSensor.runOnce();
                 // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
                 // sensormap here.
 #ifdef HAS_RAKPROT
@@ -189,8 +203,14 @@ int32_t EnvironmentTelemetryModule::runOnce()
                                                                default_telemetry_broadcast_interval_secs, numOnlineNodes))) &&
             airTime->isTxAllowedChannelUtil(config.device.role != meshtastic_Config_DeviceConfig_Role_SENSOR) &&
             airTime->isTxAllowedAirUtil()) {
+#if (SENSOR_COUNT > 1)
+            for (uint8_t i = 0; i < SENSOR_COUNT; i++)
+                sendTelemetry();
+            lastSentToMesh = millis();
+#else
             sendTelemetry();
             lastSentToMesh = millis();
+#endif
         } else if (((lastSentToPhone == 0) || !Throttle::isWithinTimespanMs(lastSentToPhone, sendToPhoneIntervalMs)) &&
                    (service->isToPhoneQueueEmpty())) {
             // Just send to phone when it's not our time to send to mesh yet
@@ -366,6 +386,11 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
     m->which_variant = meshtastic_Telemetry_environment_metrics_tag;
     m->variant.environment_metrics = meshtastic_EnvironmentMetrics_init_zero;
 
+#if (SENSOR_COUNT > 1)
+    if (lastSensor >= SENSOR_COUNT)
+        lastSensor = 0;
+#endif
+
 #ifdef SENSECAP_INDICATOR
     valid = valid && indicatorSensor.getMetrics(m);
     hasSensor = true;
@@ -415,8 +440,17 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         hasSensor = true;
     }
     if (bme680Sensor.hasSensor()) {
-        valid = valid && bme680Sensor.getMetrics(m);
-        hasSensor = true;
+#if (SENSOR_COUNT > 1)
+        if (lastSensor < 1) {
+#endif
+            valid = valid && bme680Sensor.getMetrics(m);
+            hasSensor = true;
+#if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_BME680;
+            lastSensor++;
+            return valid && hasSensor;
+        }
+#endif
     }
     if (mcp9808Sensor.hasSensor()) {
         valid = valid && mcp9808Sensor.getMetrics(m);
@@ -486,11 +520,38 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         valid = valid && cgRadSens.getMetrics(m);
         hasSensor = true;
     }
+    if (scd30Sensor.hasSensor()) {
+#if (SENSOR_COUNT > 1)
+        if (lastSensor < 2) {
+#endif
+            valid = valid && scd30Sensor.getMetrics(m);
+            hasSensor = true;
+#if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
+            lastSensor++;
+            return valid && hasSensor;
+        }
+#endif
+    }
+    if (as7265XSensor.hasSensor()) {
+#if (SENSOR_COUNT > 1)
+        if (lastSensor < 3) {
+#endif
+            valid = valid && as7265XSensor.getMetrics(m);
+            hasSensor = true;
+#if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_AS7265X;
+            lastSensor++;
+            return valid && hasSensor;
+        }
+#endif
+    }
 #ifdef HAS_RAKPROT
     valid = valid && rak9154Sensor.getMetrics(m);
     hasSensor = true;
 #endif
 #endif
+
     return valid && hasSensor;
 }
 
@@ -543,6 +604,13 @@ bool EnvironmentTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
                  m.variant.environment_metrics.wind_direction, m.variant.environment_metrics.weight);
 
         LOG_INFO("Send: radiation=%fµR/h", m.variant.environment_metrics.radiation);
+
+        LOG_INFO("Send: lux=%f, ir_lux=%f, uv_lux=%f", m.variant.environment_metrics.lux, m.variant.environment_metrics.ir_lux,
+                 m.variant.environment_metrics.ir_lux);
+
+#if (SENSOR_COUNT > 1)
+        LOG_INFO("Send: sensor=%d", m.variant.environment_metrics.sensor);
+#endif
 
         sensor_read_error_count = 0;
 
@@ -696,6 +764,14 @@ AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule
         result = cgRadSens.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
+    }
+    if (scd30Sensor.hasSensor()) {
+        result = scd30Sensor.handleAdminMessage(mp, request, response);
+        if (result != AdminMessageHandleResult::NOT_HANDLED)
+            return result;
+    }
+    if (as7265XSensor.hasSensor()) {
+        // TODO
     }
 #endif
     return result;
