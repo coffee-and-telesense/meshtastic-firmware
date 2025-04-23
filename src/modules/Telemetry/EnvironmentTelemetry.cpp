@@ -173,8 +173,10 @@ int32_t EnvironmentTelemetryModule::runOnce()
                 result = max17048Sensor.runOnce();
             if (cgRadSens.hasSensor())
                 result = cgRadSens.runOnce();
+#if SHARING_SENSORS || USE_SCD30
             if (scd30Sensor.hasSensor())
                 result = scd30Sensor.runOnce();
+#endif
             if (as7265XSensor.hasSensor())
                 result = as7265XSensor.runOnce();
                 // this only works on the wismesh hub with the solar option. This is not an I2C sensor, so we don't need the
@@ -520,6 +522,7 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         valid = valid && cgRadSens.getMetrics(m);
         hasSensor = true;
     }
+#if SHARING_SENSORS || USE_SCD30
     if (scd30Sensor.hasSensor()) {
 #if (SENSOR_COUNT > 1)
         if (lastSensor < 2) {
@@ -533,6 +536,7 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
         }
 #endif
     }
+#endif
     if (as7265XSensor.hasSensor()) {
 #if (SENSOR_COUNT > 1)
         if (lastSensor < 3) {
@@ -765,11 +769,13 @@ AdminMessageHandleResult EnvironmentTelemetryModule::handleAdminMessageForModule
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
+#if SHARING_SENSORS || USE_SCD30
     if (scd30Sensor.hasSensor()) {
         result = scd30Sensor.handleAdminMessage(mp, request, response);
         if (result != AdminMessageHandleResult::NOT_HANDLED)
             return result;
     }
+#endif
     if (as7265XSensor.hasSensor()) {
         // TODO
     }
