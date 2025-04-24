@@ -154,8 +154,8 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 
 #if USE_SCD30
     if (scd30Sensor.hasSensor()) {
-        m->variant.environment_metrics.has_sensor = true;
-        m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
+        m->variant.air_quality_metrics.has_sensor = true;
+        m->variant.air_quality_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
         valid = scd30Sensor.getMetrics(m);
     }
 #endif
