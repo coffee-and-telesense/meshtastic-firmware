@@ -48,15 +48,15 @@ bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
 #ifdef DEBUG_PORT
         const char *sender = getSenderShortName(mp);
 
-        LOG_INFO("(Received from %s): period=%zus, collision_rate=%.2f%%, node_reach=%.2%%, num_nodes=%zu,", sender,
+        LOG_INFO("(Received from %s): period=%ds, collision_rate=%.2f%%, node_reach=%.2%%, num_nodes=%d,", sender,
                  t->variant.error_metrics.period, t->variant.error_metrics.collision_rate, t->variant.error_metrics.node_reach,
                  t->variant.error_metrics.num_nodes);
-        LOG_INFO("                    usefulness=%.2f%%, avg_delay=%zums", t->variant.error_metrics.usefulness,
+        LOG_INFO("                    usefulness=%.2f%%, avg_delay=%dms", t->variant.error_metrics.usefulness,
                  t->variant.error_metrics.avg_delay);
-        LOG_INFO("                    no_route=%zu, naks=%zu,", t->variant.error_metrics.noroute, t->variant.error_metrics.naks);
-        LOG_INFO("                    timeouts=%zu, max retransmits=%zu,", t->variant.error_metrics.timeouts,
+        LOG_INFO("                    no_route=%d, naks=%d,", t->variant.error_metrics.noroute, t->variant.error_metrics.naks);
+        LOG_INFO("                    timeouts=%d, max retransmits=%d,", t->variant.error_metrics.timeouts,
                  t->variant.error_metrics.max_retransmit);
-        LOG_INFO("                    no channel=%zu, too large=%zu,", t->variant.error_metrics.no_channel,
+        LOG_INFO("                    no channel=%d, too large=%d,", t->variant.error_metrics.no_channel,
                  t->variant.error_metrics.too_large);
 #endif
         nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
@@ -92,7 +92,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
     if (RadioLibInterface::instance) {
         // Total received packets (good and bad)
-        LOG_DEBUG("Sensed & Received count = %zu rxBads + %zu rxGoods", RadioLibInterface::instance->rxBad,
+        LOG_DEBUG("Sensed & Received count = %d rxBads + %d rxGoods", RadioLibInterface::instance->rxBad,
                   RadioLibInterface::instance->rxGood);
         this->receivedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
 
@@ -102,14 +102,14 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         this->sensedCount = this->receivedCount;
 
         // Total collided packets
-        LOG_DEBUG("Collision count = %zu timing collisions + %zu rxBads + %zu txRelayCancels", this->timingCollisionCount,
+        LOG_DEBUG("Collision count = %d timing collisions + %d rxBads + %d txRelayCancels", this->timingCollisionCount,
                   RadioLibInterface::instance->rxBad, router->txRelayCanceled);
         this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
 
         // Useful count is the received packets - dupes - bads
         // TODO: problem is that rxBads are being used in many different contexts for packet receptions
         // so: distinguish types of bads, add method to count sensed signals that may not be packets(?) for sensedCount
-        LOG_DEBUG("Useful count = %zu received - %zu rxDupes - %zu rxBads", this->receivedCount, router->rxDupe,
+        LOG_DEBUG("Useful count = %d received - %d rxDupes - %d rxBads", this->receivedCount, router->rxDupe,
                   RadioLibInterface::instance->rxBad);
         this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
     }
@@ -166,7 +166,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 
     if (this->count_avg_delay != 0) {
         t.variant.error_metrics.has_avg_delay = true;
-        LOG_DEBUG("Avg delay = (%zu total delay ms / %zu total count of delays)", this->total_tx_delay, this->count_avg_delay);
+        LOG_DEBUG("Avg delay = (%d total delay ms / %d total count of delays)", this->total_tx_delay, this->count_avg_delay);
         t.variant.error_metrics.avg_delay = (this->total_tx_delay / this->count_avg_delay);
     } else {
         // Send 0 ms to report no average delay
@@ -194,21 +194,21 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 {
     meshtastic_Telemetry telemetry = getErrorTelemetry();
-    LOG_INFO("Send: period=%zus", telemetry.variant.error_metrics.period);
+    LOG_INFO("Send: period=%ds", telemetry.variant.error_metrics.period);
     if (telemetry.variant.error_metrics.has_collision_rate)
         LOG_INFO("      collision_rate=%.2f%%", telemetry.variant.error_metrics.collision_rate);
     if (telemetry.variant.error_metrics.has_node_reach)
         LOG_INFO("      node_reach=%.2f%%", telemetry.variant.error_metrics.node_reach);
     if (telemetry.variant.error_metrics.has_num_nodes)
-        LOG_INFO("      num_nodes=%zu", telemetry.variant.error_metrics.num_nodes);
+        LOG_INFO("      num_nodes=%d", telemetry.variant.error_metrics.num_nodes);
     if (telemetry.variant.error_metrics.has_usefulness)
         LOG_INFO("      usefulness=%.2f%%", telemetry.variant.error_metrics.usefulness);
     if (telemetry.variant.error_metrics.has_avg_delay)
-        LOG_INFO("      avg_delay=%zums", telemetry.variant.error_metrics.avg_delay);
-    LOG_INFO("      no_route=%zu, naks=%zu,", telemetry.variant.error_metrics.noroute, telemetry.variant.error_metrics.naks);
-    LOG_INFO("      timeouts=%zu, max retransmits=%zu,", telemetry.variant.error_metrics.timeouts,
+        LOG_INFO("      avg_delay=%dms", telemetry.variant.error_metrics.avg_delay);
+    LOG_INFO("      no_route=%d, naks=%d,", telemetry.variant.error_metrics.noroute, telemetry.variant.error_metrics.naks);
+    LOG_INFO("      timeouts=%d, max retransmits=%d,", telemetry.variant.error_metrics.timeouts,
              telemetry.variant.error_metrics.max_retransmit);
-    LOG_INFO("      no channel=%zu, too large=%zu,", telemetry.variant.error_metrics.no_channel,
+    LOG_INFO("      no channel=%d, too large=%d,", telemetry.variant.error_metrics.no_channel,
              telemetry.variant.error_metrics.too_large);
 
     meshtastic_MeshPacket *p = allocDataProtobuf(telemetry);
