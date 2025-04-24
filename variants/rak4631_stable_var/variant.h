@@ -18,7 +18,6 @@
 
 #ifndef _VARIANT_RAK4630_
 #define _VARIANT_RAK4630_
-d
 #define RAK4630
 
 /** Master clock frequency */
