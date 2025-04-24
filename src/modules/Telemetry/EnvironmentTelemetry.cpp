@@ -368,6 +368,7 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
                  t->variant.environment_metrics.weight);
 
         LOG_INFO("(Received from %s): radiation=%fµR/h", sender, t->variant.environment_metrics.radiation);
+        LOG_INFO("(Received from %s): sensor=%d", sender, t->variant.environment_metrics.sensor);
 
 #endif
         // release previous packet before occupying a new spot
@@ -448,6 +449,7 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
             valid = valid && bme680Sensor.getMetrics(m);
             hasSensor = true;
 #if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.has_sensor = true;
             m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_BME680;
             lastSensor++;
             return valid && hasSensor;
@@ -530,6 +532,7 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
             valid = valid && scd30Sensor.getMetrics(m);
             hasSensor = true;
 #if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.has_sensor = true;
             m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
             lastSensor++;
             return valid && hasSensor;
@@ -544,6 +547,7 @@ bool EnvironmentTelemetryModule::getEnvironmentTelemetry(meshtastic_Telemetry *m
             valid = valid && as7265XSensor.getMetrics(m);
             hasSensor = true;
 #if (SENSOR_COUNT > 1)
+            m->variant.environment_metrics.has_sensor = true;
             m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_AS7265X;
             lastSensor++;
             return valid && hasSensor;

@@ -112,6 +112,7 @@ bool AirQualityTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPack
                  t->variant.air_quality_metrics.pm100_environmental);
 
         LOG_INFO("                  | CO2=%d", t->variant.air_quality_metrics.co2);
+        LOG_INFO("                  | sensor=%d", sender, t->variant.air_quality_metrics.sensor);
 #endif
         // release previous packet before occupying a new spot
         if (lastMeasurementPacket != nullptr)
@@ -153,6 +154,8 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 
 #if USE_SCD30
     if (scd30Sensor.hasSensor()) {
+        m->variant.environment_metrics.has_sensor = true;
+        m->variant.environment_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
         valid = scd30Sensor.getMetrics(m);
     }
 #endif
@@ -165,6 +168,7 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
              m->variant.air_quality_metrics.pm100_environmental);
 
     LOG_INFO("         | CO2=%d", m->variant.air_quality_metrics.co2);
+    LOG_INFO("         | sensor=%d", m->variant.air_quality_metrics.sensor);
 
     return true;
 }
