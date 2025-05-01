@@ -28,6 +28,8 @@
 
 #define USE_RF95 // RFM95/SX127x
 
+#define MESH_LOCAL_STATS 1
+
 #undef LORA_SCK
 #undef LORA_MISO
 #undef LORA_MOSI

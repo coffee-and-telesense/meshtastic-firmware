@@ -20,6 +20,9 @@
 #define USE_SCD30 1
 #define USE_PM25AQI 0
 
+// Abuse local stats by sending to the mesh every hour
+#define MESH_LOCAL_STATS 1
+
 // Use Error Telemetry
 #define MESHTASTIC_EXCLUDE_ERROR_TELEMETRY 0
 

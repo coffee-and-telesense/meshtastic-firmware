@@ -38,6 +38,15 @@ int32_t DeviceTelemetryModule::runOnce()
             lastSentStatsToPhone = uptimeLastMs;
         }
     }
+#ifdef MESH_LOCAL_STATS
+    if ((lastSentToMeshLocal == 0) || ((uptimeLastMs - lastSentToMeshLocal) >= sendLocalStatsIntervalMs) &&
+                                          airTime->isTxAllowedChannelUtil(!isImpoliteRole) && airTime->isTxAllowedAirUtil() &&
+                                          config.device.role != meshtastic_Config_DeviceConfig_Role_REPEATER &&
+                                          config.device.role != meshtastic_Config_DeviceConfig_Role_CLIENT_HIDDEN) {
+        sendLocalStatsToMesh();
+        lastSentToMeshLocal = uptimeLastMs;
+    }
+#endif
     return sendToPhoneIntervalMs;
 }
 
@@ -57,6 +66,14 @@ bool DeviceTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &
 #endif
         nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
     }
+#ifdef MESH_LOCAL_STATS
+    else if (t->which_variant == meshtastic_Telemetry_local_stats_tag) {
+        const char *sender = getSenderShortName(mp);
+
+        LOG_INFO("(Received local stats)"); // TODO: logging
+        nodeDB->updateTelemetry(getFrom(&mp), *t, RX_SRC_RADIO);
+    }
+#endif
     return false; // Let others look at this message also if they want
 }
 
@@ -163,6 +180,21 @@ void DeviceTelemetryModule::sendLocalStatsToPhone()
 
     service->sendToPhone(p);
 }
+
+#ifdef MESH_LOCAL_STATS
+void DeviceTelemetryModule::sendLocalStatsToMesh(NodeNum dest)
+{
+    meshtastic_Telemetry telemetry = getLocalStatsTelemetry();
+    LOG_INFO("Send local stats: "); // TODO: finish log
+    meshtastic_MeshPacket *p = allocDataProtobuf(telemetry);
+    p->to = dest;
+    p->decoded.want_response = false;
+    p->priority = meshtastic_MeshPacket_Priority_BACKGROUND;
+    nodeDB->updateTelemetry(nodeDB->getNodeNum(), telemetry, RX_SRC_LOCAL);
+    LOG_INFO("Send packet to mesh");
+    service->sendToMesh(p, RX_SRC_LOCAL, false);
+}
+#endif
 
 bool DeviceTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 {
