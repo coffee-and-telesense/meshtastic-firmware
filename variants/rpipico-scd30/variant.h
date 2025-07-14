@@ -15,10 +15,11 @@
 #undef MESHTASTIC_MINIMIZE_BUILD
 
 // Yes, we are using the SCD30 for both Air Quality and Environment Metrics
-#define SHARING_SENSORS 1
-#define SENSOR_COUNT 2
-#define USE_SCD30 1
+#define SHARING_SENSORS 0
+#define SENSOR_COUNT 1
+#define USE_SCD30 0
 #define USE_PM25AQI 0
+#define USE_BMV080 1
 
 // Use Error Telemetry
 #define MESHTASTIC_EXCLUDE_ERROR_TELEMETRY 0
@@ -81,7 +82,5 @@
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
 #endif
 
-#ifdef USE_SCD30
 #define I2C_SDA 4
 #define I2C_SCL 5
-#endif

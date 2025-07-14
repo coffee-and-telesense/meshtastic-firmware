@@ -90,7 +90,9 @@ typedef enum _meshtastic_TelemetrySensorType {
     /* SCD30 Temperature, Humidity, and CO2 */
     meshtastic_TelemetrySensorType_SCD30 = 36,
     /* AS7265X Spectral Triad spectroscopy sensor */
-    meshtastic_TelemetrySensorType_AS7265X = 37
+    meshtastic_TelemetrySensorType_AS7265X = 37,
+    /* BMV080 Particulate Matter sensor */
+    meshtastic_TelemetrySensorType_BMV080 = 39
 } meshtastic_TelemetrySensorType;
 
 /* Struct definitions */

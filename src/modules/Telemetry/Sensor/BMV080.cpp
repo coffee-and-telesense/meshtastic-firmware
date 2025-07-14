@@ -3,9 +3,8 @@
 #if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
 
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
-#include "BMV080Sensor.h"
+#include "SparkFun_BMV080_Arduino_Library.h"
 #include "TelemetrySensor.h"
-#include <Adafruit_BMV080.h>
 #include <typeinfo>
 
 BMV080Sensor::BMV080Sensor() : TelemetrySensor(meshtastic_TelemetrySensorType_BMV080, "BMV080") {}
