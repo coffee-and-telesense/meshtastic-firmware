@@ -15,7 +15,7 @@ class BMV080Sensor : public TelemetrySensor
     virtual void setup() override;
 
   public:
-    SCD30Sensor();
+    SCD30Sensor(); // wait why
     virtual int32_t runOnce() override;
     virtual bool getMetrics(meshtastic_Telemetry *measurement) override;
     bool getAirQualityMetrics(meshtastic_Telemetry *measurement);
