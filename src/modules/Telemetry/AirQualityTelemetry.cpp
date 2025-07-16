@@ -21,6 +21,13 @@ SCD30Sensor scd30Sensor;
 #include "Sensor/SharedSensors.h"
 #endif
 
+#if !SHARING_SENSORS && USE_BMV080
+#include "Sensor/BMV080Sensor.h"
+BMV080Sensor bmv080sensor;
+#else
+#include "Sensor/SharedSensors.h"
+#endif
+
 int32_t AirQualityTelemetryModule::runOnce()
 {
     /*
@@ -45,6 +52,13 @@ int32_t AirQualityTelemetryModule::runOnce()
 #if USE_SCD30
             if (scd30Sensor.hasSensor()) {
                 scd30Sensor.runOnce();
+                return 1000;
+            }
+#endif
+
+#if USE_BMV080
+            if(bmv080sensor.hasSensor()) {
+                bmv080sensor.runOnce();
                 return 1000;
             }
 #endif
@@ -154,9 +168,16 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
 
 #if USE_SCD30
     if (scd30Sensor.hasSensor()) {
-        m->variant.air_quality_metrics.has_sensor = true;
+        m->variant.air_quality_metrics. has_sensor = true;
         m->variant.air_quality_metrics.sensor = meshtastic_TelemetrySensorType_SCD30;
         valid = scd30Sensor.getMetrics(m);
+    }
+#endif
+
+#if USE_BMV080
+    if (bmv080sensor.hasSensor()) {
+        m->variant.air_quality_metrics.has_sensor = true;
+        m->variant.air_quality_metrics.sensor = meshtastic_TelemetrySensorType_BMV080;
     }
 #endif
 

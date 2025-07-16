@@ -9,5 +9,10 @@
 extern SCD30Sensor scd30Sensor;
 #endif
 
+#if USE_BMV080
+#include "BMV080Sensor.h"
+extern BMV080Sensor bmv080Sensor;
+#endif
+
 #endif
 #endif
