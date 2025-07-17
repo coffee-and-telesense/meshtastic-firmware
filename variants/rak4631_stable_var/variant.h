@@ -33,7 +33,7 @@
 #define SENSOR_COUNT 1
 #define USE_SCD30 0
 #define USE_PM25AQI 0
-#define USE_BMV080 1
+#define USE_BMV080 0
 
 // Use Error Telemetry
 #define MESHTASTIC_EXCLUDE_ERROR_TELEMETRY 0

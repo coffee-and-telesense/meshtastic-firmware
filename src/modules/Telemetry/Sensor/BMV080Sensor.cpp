@@ -1,6 +1,6 @@
 #include "configuration.h"
 
-#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
+#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR && USE_BMV080
 
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "BMV080Sensor.h"
@@ -13,18 +13,21 @@ BMV080Sensor::BMV080Sensor() : TelemetrySensor(meshtastic_TelemetrySensorType_BM
 int32_t BMV080Sensor::runOnce()
 {
     LOG_INFO("Init sensor: %s", sensorName);
-    if (!bmv080.begin()) {
-        bmv080.begin();
-    }
-    if (bmv080.setMode(SF_BMV080_MODE_CONTINUOUS) == true) {
-        LOG_INFO("BMV080 set to continuous mode");
-    } else {
-        LOG_ERROR("Error setting BMV080 mode");
-    }
-    return initI2CSensor();
+    // if (!bmv080.begin()) {
+        // bmv080.begin();
+    // }
+    // if (bmv080.setMode(SF_BMV080_MODE_CONTINUOUS) == true) {
+    //     LOG_INFO("BMV080 set to continuous mode");
+    // } else {
+    //     LOG_ERROR("Error setting BMV080 mode");
+    // }
+    // return initI2CSensor();
 }
 
-void BMV080Sensor::setup() {}
+void BMV080Sensor::setup() {
+    //not sure what they need setup 
+
+}
 
 bool BMV080Sensor::getMetrics(meshtastic_Telemetry *measurement)
 {
@@ -35,7 +38,7 @@ bool BMV080Sensor::getMetrics(meshtastic_Telemetry *measurement)
 bool BMV080Sensor::getAirQualityMetrics(meshtastic_Telemetry *measurement)
 {
     measurement->variant.air_quality_metrics.has_pm25_standard = true;
-
+    // we ain't calling stuff here 
     return true;
 }
 #endif
