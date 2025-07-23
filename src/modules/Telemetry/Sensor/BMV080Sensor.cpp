@@ -12,10 +12,11 @@ BMV080Sensor::BMV080Sensor() : TelemetrySensor(meshtastic_TelemetrySensorType_BM
 
 int32_t BMV080Sensor::runOnce()
 {
-    LOG_INFO("Init sensor: %s", sensorName);
-    if (!bmv080.begin()) {
-        bmv080.begin();
+    if (bmv080.begin(nodeTelemetrySensorsMap[sensorType].first, *nodeTelemetrySensorsMap[sensorType].second) == false) {
+        LOG_ERROR("BMV080 not detected at I2C address");
     }
+    LOG_INFO("Init sensor: %s", sensorName);
+    bmv080.init();
     if (bmv080.setMode(SF_BMV080_MODE_CONTINUOUS) == true) {
         LOG_INFO("BMV080 set to continuous mode");
     } else {
@@ -34,7 +35,18 @@ bool BMV080Sensor::getMetrics(meshtastic_Telemetry *measurement)
 
 bool BMV080Sensor::getAirQualityMetrics(meshtastic_Telemetry *measurement)
 {
+    measurement->variant.air_quality_metrics.has_pm10_standard = true;
     measurement->variant.air_quality_metrics.has_pm25_standard = true;
+    measurement->variant.air_quality_metrics.has_pm100_standard = true;
+
+    if (bmv080.readSensor()) {
+        measurement->variant.air_quality_metrics.pm10_standard = bmv080.PM1();
+        measurement->variant.air_quality_metrics.pm25_standard = bmv080.PM25();
+        measurement->variant.air_quality_metrics.pm100_standard = bmv080.PM10();
+    } else {
+        LOG_ERROR("BMV080 data not ready");
+        return false;
+    }
 
     return true;
 }
