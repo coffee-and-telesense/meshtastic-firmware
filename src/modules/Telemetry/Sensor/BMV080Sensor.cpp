@@ -14,19 +14,22 @@ int32_t BMV080Sensor::runOnce()
 {
     LOG_INFO("Init sensor: %s", sensorName);
     // if (!bmv080.begin()) {
-        // bmv080.begin();
+    bmv080.begin();
+    bmv080.init(); //catch return val and handle
+    bmv080.open(); //catch return value and handle
     // }
+
     // if (bmv080.setMode(SF_BMV080_MODE_CONTINUOUS) == true) {
     //     LOG_INFO("BMV080 set to continuous mode");
     // } else {
     //     LOG_ERROR("Error setting BMV080 mode");
     // }
-    // return initI2CSensor();
+    return initI2CSensor();
 }
 
 void BMV080Sensor::setup() {
     //not sure what they need setup 
-
+    return;
 }
 
 bool BMV080Sensor::getMetrics(meshtastic_Telemetry *measurement)

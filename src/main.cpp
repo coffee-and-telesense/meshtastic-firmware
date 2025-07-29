@@ -1120,6 +1120,7 @@ void setup()
         router->addInterface(rIf);
 
         // Log bit rate to debug output
+        //TODO: WHY LOOP HERE AFTER ADDING BMV080
         LOG_DEBUG("LoRA bitrate = %f bytes / sec", (float(meshtastic_Constants_DATA_PAYLOAD_LEN) /
                                                     (float(rIf->getPacketTime(meshtastic_Constants_DATA_PAYLOAD_LEN)))) *
                                                        1000);
