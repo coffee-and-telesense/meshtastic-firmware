@@ -185,7 +185,6 @@ typedef struct _meshtastic_EnvironmentMetrics {
     float rainfall_24h;
     /* Sensor type */
     bool has_sensor;
-    /* Which sensor is sending the data */
     meshtastic_TelemetrySensorType sensor;
 } meshtastic_EnvironmentMetrics;
 
@@ -344,6 +343,9 @@ typedef struct _meshtastic_ErrorMetrics {
     /* Count of too large errors */
     bool has_too_large;
     uint32_t too_large;
+    /* An entry for each seen node in the mesh reporting:
+ last heard seconds, number of packets rx'd, last rx rssi, and battery_level */
+    pb_callback_t node_stats;
 } meshtastic_ErrorMetrics;
 
 /* Types of Measurements the telemetry module is equipped to handle */
@@ -368,6 +370,20 @@ typedef struct _meshtastic_Telemetry {
         meshtastic_ErrorMetrics error_metrics;
     } variant;
 } meshtastic_Telemetry;
+
+/* Stats about nodes to send over mesh */
+typedef struct _meshtastic_nodeStats {
+    /* The node id we are reporting on */
+    uint32_t node_id;
+    /* The last time we heard from the node (in seconds) */
+    uint32_t last_heard;
+    /* How many times have we heard from them (packet count)? */
+    uint32_t num_packets_rx;
+    /* 0-100 (>100 means powered) */
+    uint32_t battery_level;
+    /* Last rssi from a the given node */
+    int32_t rx_rssi;
+} meshtastic_nodeStats;
 
 /* NAU7802 Telemetry configuration, for saving to flash */
 typedef struct _meshtastic_Nau7802Config {
@@ -399,6 +415,7 @@ extern "C" {
 
 
 
+
 /* Initializer values for message structs */
 #define meshtastic_DeviceMetrics_init_default    {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_EnvironmentMetrics_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
@@ -406,8 +423,9 @@ extern "C" {
 #define meshtastic_AirQualityMetrics_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
 #define meshtastic_LocalStats_init_default       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_HealthMetrics_init_default    {false, 0, false, 0, false, 0}
-#define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define meshtastic_Telemetry_init_default        {0, 0, {meshtastic_DeviceMetrics_init_default}}
+#define meshtastic_nodeStats_init_default        {0, 0, 0, 0, 0}
 #define meshtastic_Nau7802Config_init_default    {0, 0}
 #define meshtastic_DeviceMetrics_init_zero       {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_EnvironmentMetrics_init_zero  {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
@@ -415,8 +433,9 @@ extern "C" {
 #define meshtastic_AirQualityMetrics_init_zero   {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
 #define meshtastic_LocalStats_init_zero          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_HealthMetrics_init_zero       {false, 0, false, 0, false, 0}
-#define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define meshtastic_Telemetry_init_zero           {0, 0, {meshtastic_DeviceMetrics_init_zero}}
+#define meshtastic_nodeStats_init_zero           {0, 0, 0, 0, 0}
 #define meshtastic_Nau7802Config_init_zero       {0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -492,6 +511,7 @@ extern "C" {
 #define meshtastic_ErrorMetrics_max_retransmit_tag 10
 #define meshtastic_ErrorMetrics_no_channel_tag   11
 #define meshtastic_ErrorMetrics_too_large_tag    12
+#define meshtastic_ErrorMetrics_node_stats_tag   13
 #define meshtastic_Telemetry_time_tag            1
 #define meshtastic_Telemetry_device_metrics_tag  2
 #define meshtastic_Telemetry_environment_metrics_tag 3
@@ -500,6 +520,11 @@ extern "C" {
 #define meshtastic_Telemetry_local_stats_tag     6
 #define meshtastic_Telemetry_health_metrics_tag  7
 #define meshtastic_Telemetry_error_metrics_tag   8
+#define meshtastic_nodeStats_node_id_tag         1
+#define meshtastic_nodeStats_last_heard_tag      2
+#define meshtastic_nodeStats_num_packets_rx_tag  3
+#define meshtastic_nodeStats_battery_level_tag   4
+#define meshtastic_nodeStats_rx_rssi_tag         5
 #define meshtastic_Nau7802Config_zeroOffset_tag  1
 #define meshtastic_Nau7802Config_calibrationFactor_tag 2
 
@@ -600,9 +625,11 @@ X(a, STATIC,   OPTIONAL, UINT32,   naks,              8) \
 X(a, STATIC,   OPTIONAL, UINT32,   timeouts,          9) \
 X(a, STATIC,   OPTIONAL, UINT32,   max_retransmit,   10) \
 X(a, STATIC,   OPTIONAL, UINT32,   no_channel,       11) \
-X(a, STATIC,   OPTIONAL, UINT32,   too_large,        12)
-#define meshtastic_ErrorMetrics_CALLBACK NULL
+X(a, STATIC,   OPTIONAL, UINT32,   too_large,        12) \
+X(a, CALLBACK, REPEATED, MESSAGE,  node_stats,       13)
+#define meshtastic_ErrorMetrics_CALLBACK pb_default_field_callback
 #define meshtastic_ErrorMetrics_DEFAULT NULL
+#define meshtastic_ErrorMetrics_node_stats_MSGTYPE meshtastic_nodeStats
 
 #define meshtastic_Telemetry_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, FIXED32,  time,              1) \
@@ -623,6 +650,15 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (variant,error_metrics,variant.error_metrics)
 #define meshtastic_Telemetry_variant_health_metrics_MSGTYPE meshtastic_HealthMetrics
 #define meshtastic_Telemetry_variant_error_metrics_MSGTYPE meshtastic_ErrorMetrics
 
+#define meshtastic_nodeStats_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, FIXED32,  node_id,           1) \
+X(a, STATIC,   SINGULAR, UINT32,   last_heard,        2) \
+X(a, STATIC,   SINGULAR, UINT32,   num_packets_rx,    3) \
+X(a, STATIC,   SINGULAR, UINT32,   battery_level,     4) \
+X(a, STATIC,   SINGULAR, INT32,    rx_rssi,           5)
+#define meshtastic_nodeStats_CALLBACK NULL
+#define meshtastic_nodeStats_DEFAULT NULL
+
 #define meshtastic_Nau7802Config_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, INT32,    zeroOffset,        1) \
 X(a, STATIC,   SINGULAR, FLOAT,    calibrationFactor,   2)
@@ -637,6 +673,7 @@ extern const pb_msgdesc_t meshtastic_LocalStats_msg;
 extern const pb_msgdesc_t meshtastic_HealthMetrics_msg;
 extern const pb_msgdesc_t meshtastic_ErrorMetrics_msg;
 extern const pb_msgdesc_t meshtastic_Telemetry_msg;
+extern const pb_msgdesc_t meshtastic_nodeStats_msg;
 extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
@@ -648,19 +685,21 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_HealthMetrics_fields &meshtastic_HealthMetrics_msg
 #define meshtastic_ErrorMetrics_fields &meshtastic_ErrorMetrics_msg
 #define meshtastic_Telemetry_fields &meshtastic_Telemetry_msg
+#define meshtastic_nodeStats_fields &meshtastic_nodeStats_msg
 #define meshtastic_Nau7802Config_fields &meshtastic_Nau7802Config_msg
 
 /* Maximum encoded size of messages (where known) */
-#define MESHTASTIC_MESHTASTIC_TELEMETRY_PB_H_MAX_SIZE meshtastic_Telemetry_size
+/* meshtastic_ErrorMetrics_size depends on runtime parameters */
+/* meshtastic_Telemetry_size depends on runtime parameters */
+#define MESHTASTIC_MESHTASTIC_TELEMETRY_PB_H_MAX_SIZE meshtastic_EnvironmentMetrics_size
 #define meshtastic_AirQualityMetrics_size        80
 #define meshtastic_DeviceMetrics_size            27
 #define meshtastic_EnvironmentMetrics_size       106
-#define meshtastic_ErrorMetrics_size             69
 #define meshtastic_HealthMetrics_size            11
 #define meshtastic_LocalStats_size               60
 #define meshtastic_Nau7802Config_size            16
 #define meshtastic_PowerMetrics_size             30
-#define meshtastic_Telemetry_size                113
+#define meshtastic_nodeStats_size                34
 
 #ifdef __cplusplus
 } /* extern "C" */
