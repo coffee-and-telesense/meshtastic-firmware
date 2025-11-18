@@ -374,14 +374,19 @@ typedef struct _meshtastic_Telemetry {
 /* Stats about nodes to send over mesh */
 typedef struct _meshtastic_nodeStats {
     /* The node id we are reporting on */
+    bool has_node_id;
     uint32_t node_id;
     /* The last time we heard from the node (in seconds) */
+    bool has_last_heard;
     uint32_t last_heard;
     /* How many times have we heard from them (packet count)? */
+    bool has_num_packets_rx;
     uint32_t num_packets_rx;
     /* 0-100 (>100 means powered) */
+    bool has_battery_level;
     uint32_t battery_level;
     /* Last rssi from a the given node */
+    bool has_rx_rssi;
     int32_t rx_rssi;
 } meshtastic_nodeStats;
 
@@ -425,7 +430,7 @@ extern "C" {
 #define meshtastic_HealthMetrics_init_default    {false, 0, false, 0, false, 0}
 #define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define meshtastic_Telemetry_init_default        {0, 0, {meshtastic_DeviceMetrics_init_default}}
-#define meshtastic_nodeStats_init_default        {0, 0, 0, 0, 0}
+#define meshtastic_nodeStats_init_default        {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Nau7802Config_init_default    {0, 0}
 #define meshtastic_DeviceMetrics_init_zero       {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_EnvironmentMetrics_init_zero  {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
@@ -435,7 +440,7 @@ extern "C" {
 #define meshtastic_HealthMetrics_init_zero       {false, 0, false, 0, false, 0}
 #define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define meshtastic_Telemetry_init_zero           {0, 0, {meshtastic_DeviceMetrics_init_zero}}
-#define meshtastic_nodeStats_init_zero           {0, 0, 0, 0, 0}
+#define meshtastic_nodeStats_init_zero           {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Nau7802Config_init_zero       {0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -651,11 +656,11 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (variant,error_metrics,variant.error_metrics)
 #define meshtastic_Telemetry_variant_error_metrics_MSGTYPE meshtastic_ErrorMetrics
 
 #define meshtastic_nodeStats_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, FIXED32,  node_id,           1) \
-X(a, STATIC,   SINGULAR, UINT32,   last_heard,        2) \
-X(a, STATIC,   SINGULAR, UINT32,   num_packets_rx,    3) \
-X(a, STATIC,   SINGULAR, UINT32,   battery_level,     4) \
-X(a, STATIC,   SINGULAR, INT32,    rx_rssi,           5)
+X(a, STATIC,   OPTIONAL, FIXED32,  node_id,           1) \
+X(a, STATIC,   OPTIONAL, UINT32,   last_heard,        2) \
+X(a, STATIC,   OPTIONAL, UINT32,   num_packets_rx,    3) \
+X(a, STATIC,   OPTIONAL, UINT32,   battery_level,     4) \
+X(a, STATIC,   OPTIONAL, INT32,    rx_rssi,           5)
 #define meshtastic_nodeStats_CALLBACK NULL
 #define meshtastic_nodeStats_DEFAULT NULL
 
