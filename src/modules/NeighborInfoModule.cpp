@@ -3,6 +3,7 @@
 #include "MeshService.h"
 #include "NodeDB.h"
 #include "RTC.h"
+#include "meshtastic/deviceonly.pb.h"
 #include <Throttle.h>
 
 NeighborInfoModule *neighborInfoModule;
@@ -19,6 +20,7 @@ void NeighborInfoModule::printNeighborInfo(const char *header, const meshtastic_
     LOG_DEBUG("Packet contains %d neighbors", np->neighbors_count);
     for (int i = 0; i < np->neighbors_count; i++) {
         LOG_DEBUG("Neighbor %d: node_id=0x%x, snr=%.2f", i, np->neighbors[i].node_id, np->neighbors[i].snr);
+        LOG_DEBUG("\t rssi=%d, battery_level=%u", i, np->neighbors[i].rssi, np->neighbors[i].battery_level);
     }
 }
 
@@ -34,7 +36,8 @@ void NeighborInfoModule::printNodeDBNeighbors()
     }
 }
 
-/* Send our initial owner announcement 35 seconds after we start (to give network time to setup) */
+/* Send our initial owner announcement 35 seconds after we start (to give
+ * network time to setup) */
 NeighborInfoModule::NeighborInfoModule()
     : ProtobufModule("neighborinfo", meshtastic_PortNum_NEIGHBORINFO_APP, &meshtastic_NeighborInfo_msg),
       concurrency::OSThread("NeighborInfo")
@@ -53,8 +56,8 @@ NeighborInfoModule::NeighborInfoModule()
 }
 
 /*
-Collect neighbor info from the nodeDB's history, capping at a maximum number of entries and max time
-Assumes that the neighborInfo packet has been allocated
+Collect neighbor info from the nodeDB's history, capping at a maximum number of
+entries and max time Assumes that the neighborInfo packet has been allocated
 @returns the number of entries collected
 */
 uint32_t NeighborInfoModule::collectNeighborInfo(meshtastic_NeighborInfo *neighborInfo)
@@ -71,8 +74,10 @@ uint32_t NeighborInfoModule::collectNeighborInfo(meshtastic_NeighborInfo *neighb
         if ((neighborInfo->neighbors_count < MAX_NUM_NEIGHBORS) && (nbr.node_id != my_node_id)) {
             neighborInfo->neighbors[neighborInfo->neighbors_count].node_id = nbr.node_id;
             neighborInfo->neighbors[neighborInfo->neighbors_count].snr = nbr.snr;
-            // Note: we don't set the last_rx_time and node_broadcast_intervals_secs here, because we don't want to send this over
-            // the mesh
+            neighborInfo->neighbors[neighborInfo->neighbors_count].battery_level = nbr.battery_level;
+            neighborInfo->neighbors[neighborInfo->neighbors_count].last_rx_time = nbr.last_rx_time;
+            neighborInfo->neighbors[neighborInfo->neighbors_count].num_packets_rx = nbr.num_packets_rx;
+            neighborInfo->neighbors[neighborInfo->neighbors_count].rssi = nbr.rssi;
             neighborInfo->neighbors_count++;
         }
     }
@@ -88,8 +93,9 @@ void NeighborInfoModule::cleanUpNeighbors()
     uint32_t now = getTime();
     NodeNum my_node_id = nodeDB->getNodeNum();
     for (auto it = neighbors.rbegin(); it != neighbors.rend();) {
-        // We will remove a neighbor if we haven't heard from them in twice the broadcast interval
-        // cannot use isWithinTimespanMs() as it->last_rx_time is seconds since 1970
+        // We will remove a neighbor if we haven't heard from them in twice the
+        // broadcast interval cannot use isWithinTimespanMs() as it->last_rx_time is
+        // seconds since 1970
         if ((now - it->last_rx_time > it->node_broadcast_interval_secs * 2) && (it->node_id != my_node_id)) {
             LOG_DEBUG("Remove neighbor with node ID 0x%x", it->node_id);
             it = std::vector<meshtastic_Neighbor>::reverse_iterator(
@@ -141,14 +147,16 @@ bool NeighborInfoModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp,
         updateNeighbors(mp, np);
     } else if (mp.hop_start != 0 && mp.hop_start == mp.hop_limit) {
         // If the hopLimit is the same as hopStart, then it is a neighbor
-        getOrCreateNeighbor(mp.from, mp.from, 0, mp.rx_snr); // Set the broadcast interval to 0, as we don't know it
+        getOrCreateNeighbor(mp.from, mp.from, 0, mp.rx_snr,
+                            mp.rx_rssi); // Set the broadcast interval to 0, as we don't know it
     }
     // Allow others to handle this packet
     return false;
 }
 
 /*
-Copy the content of a current NeighborInfo packet into a new one and update the last_sent_by_id to our NodeNum
+Copy the content of a current NeighborInfo packet into a new one and update the
+last_sent_by_id to our NodeNum
 */
 void NeighborInfoModule::alterReceivedProtobuf(meshtastic_MeshPacket &p, meshtastic_NeighborInfo *n)
 {
@@ -166,15 +174,16 @@ void NeighborInfoModule::resetNeighbors()
 
 void NeighborInfoModule::updateNeighbors(const meshtastic_MeshPacket &mp, const meshtastic_NeighborInfo *np)
 {
-    // The last sent ID will be 0 if the packet is from the phone, which we don't count as
-    // an edge. So we assume that if it's zero, then this packet is from our node.
+    // The last sent ID will be 0 if the packet is from the phone, which we don't
+    // count as an edge. So we assume that if it's zero, then this packet is from
+    // our node.
     if (mp.which_payload_variant == meshtastic_MeshPacket_decoded_tag && mp.from) {
-        getOrCreateNeighbor(mp.from, np->last_sent_by_id, np->node_broadcast_interval_secs, mp.rx_snr);
+        getOrCreateNeighbor(mp.from, np->last_sent_by_id, np->node_broadcast_interval_secs, mp.rx_snr, mp.rx_rssi);
     }
 }
 
 meshtastic_Neighbor *NeighborInfoModule::getOrCreateNeighbor(NodeNum originalSender, NodeNum n,
-                                                             uint32_t node_broadcast_interval_secs, float snr)
+                                                             uint32_t node_broadcast_interval_secs, float snr, int32_t rssi)
 {
     // our node and the phone are the same node (not neighbors)
     if (n == 0) {
@@ -186,22 +195,49 @@ meshtastic_Neighbor *NeighborInfoModule::getOrCreateNeighbor(NodeNum originalSen
             // if found, update it
             neighbors[i].snr = snr;
             neighbors[i].last_rx_time = getTime();
-            // Only if this is the original sender, the broadcast interval corresponds to it
+            neighbors[i].rssi = rssi;
+
+            // update last battery_level status from nodedb
+            meshtastic_NodeInfoLite *x = nodeDB->getMeshNode(n);
+            if (x->has_device_metrics) {
+                if (x->device_metrics.has_battery_level) {
+                    neighbors[i].battery_level = x->device_metrics.battery_level;
+                }
+            }
+
+            // TODO: packet counts
+
+            // Only if this is the original sender, the broadcast interval corresponds
+            // to it
             if (originalSender == n && node_broadcast_interval_secs != 0)
                 neighbors[i].node_broadcast_interval_secs = node_broadcast_interval_secs;
             return &neighbors[i];
         }
     }
-    // otherwise, allocate one and assign data to it
 
+    // otherwise, allocate one and assign data to it
     meshtastic_Neighbor new_nbr = meshtastic_Neighbor_init_zero;
     new_nbr.node_id = n;
     new_nbr.snr = snr;
+    new_nbr.rssi = rssi;
     new_nbr.last_rx_time = getTime();
-    // Only if this is the original sender, the broadcast interval corresponds to it
+
+    // update last battery_level status from nodedb
+    meshtastic_NodeInfoLite *x = nodeDB->getMeshNode(n);
+    if (x->has_device_metrics) {
+        if (x->device_metrics.has_battery_level) {
+            new_nbr.battery_level = x->device_metrics.battery_level;
+        }
+    }
+
+    // TODO: packet counts
+
+    // Only if this is the original sender, the broadcast interval corresponds to
+    // it
     if (originalSender == n && node_broadcast_interval_secs != 0)
         new_nbr.node_broadcast_interval_secs = node_broadcast_interval_secs;
-    else // Assume the same broadcast interval as us for the neighbor if we don't know it
+    else // Assume the same broadcast interval as us for the neighbor if we don't
+         // know it
         new_nbr.node_broadcast_interval_secs = moduleConfig.neighbor_info.update_interval;
 
     if (neighbors.size() < MAX_NUM_NEIGHBORS) {
