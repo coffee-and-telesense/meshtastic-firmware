@@ -388,6 +388,9 @@ typedef struct _meshtastic_nodeStats {
     /* Last rssi from a the given node */
     bool has_rx_rssi;
     int32_t rx_rssi;
+    /* Last snr from a the given node */
+    bool has_snr;
+    float snr;
 } meshtastic_nodeStats;
 
 /* NAU7802 Telemetry configuration, for saving to flash */
@@ -430,7 +433,7 @@ extern "C" {
 #define meshtastic_HealthMetrics_init_default    {false, 0, false, 0, false, 0}
 #define meshtastic_ErrorMetrics_init_default     {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define meshtastic_Telemetry_init_default        {0, 0, {meshtastic_DeviceMetrics_init_default}}
-#define meshtastic_nodeStats_init_default        {false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_nodeStats_init_default        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Nau7802Config_init_default    {0, 0}
 #define meshtastic_DeviceMetrics_init_zero       {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_EnvironmentMetrics_init_zero  {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, _meshtastic_TelemetrySensorType_MIN}
@@ -440,7 +443,7 @@ extern "C" {
 #define meshtastic_HealthMetrics_init_zero       {false, 0, false, 0, false, 0}
 #define meshtastic_ErrorMetrics_init_zero        {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, {{NULL}, NULL}}
 #define meshtastic_Telemetry_init_zero           {0, 0, {meshtastic_DeviceMetrics_init_zero}}
-#define meshtastic_nodeStats_init_zero           {false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_nodeStats_init_zero           {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_Nau7802Config_init_zero       {0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -530,6 +533,7 @@ extern "C" {
 #define meshtastic_nodeStats_num_packets_rx_tag  3
 #define meshtastic_nodeStats_battery_level_tag   4
 #define meshtastic_nodeStats_rx_rssi_tag         5
+#define meshtastic_nodeStats_snr_tag             6
 #define meshtastic_Nau7802Config_zeroOffset_tag  1
 #define meshtastic_Nau7802Config_calibrationFactor_tag 2
 
@@ -660,7 +664,8 @@ X(a, STATIC,   OPTIONAL, FIXED32,  node_id,           1) \
 X(a, STATIC,   OPTIONAL, UINT32,   last_heard,        2) \
 X(a, STATIC,   OPTIONAL, UINT32,   num_packets_rx,    3) \
 X(a, STATIC,   OPTIONAL, UINT32,   battery_level,     4) \
-X(a, STATIC,   OPTIONAL, INT32,    rx_rssi,           5)
+X(a, STATIC,   OPTIONAL, INT32,    rx_rssi,           5) \
+X(a, STATIC,   OPTIONAL, FLOAT,    snr,               6)
 #define meshtastic_nodeStats_CALLBACK NULL
 #define meshtastic_nodeStats_DEFAULT NULL
 
@@ -704,7 +709,7 @@ extern const pb_msgdesc_t meshtastic_Nau7802Config_msg;
 #define meshtastic_LocalStats_size               60
 #define meshtastic_Nau7802Config_size            16
 #define meshtastic_PowerMetrics_size             30
-#define meshtastic_nodeStats_size                34
+#define meshtastic_nodeStats_size                39
 
 #ifdef __cplusplus
 } /* extern "C" */
