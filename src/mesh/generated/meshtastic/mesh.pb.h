@@ -914,12 +914,17 @@ typedef struct _meshtastic_Neighbor {
     uint32_t node_id;
     /* SNR of last heard message */
     float snr;
-    /* Reception time (in secs since 1970) of last message that was last sent by this ID.
- Note: this is for local storage only and will not be sent out over the mesh. */
+    /* Reception time (in secs since 1970) of last message that was last sent by this ID. */
     uint32_t last_rx_time;
     /* Broadcast interval of this neighbor (in seconds).
  Note: this is for local storage only and will not be sent out over the mesh. */
     uint32_t node_broadcast_interval_secs;
+    /* Number of packets heard from this node */
+    uint32_t num_packets_rx;
+    /* Last RSSI from a given node */
+    int32_t rssi;
+    /* 0-100 (>100 means powered) */
+    uint32_t battery_level;
 } meshtastic_Neighbor;
 
 /* Full info on edges for a single node */
@@ -932,7 +937,7 @@ typedef struct _meshtastic_NeighborInfo {
     uint32_t node_broadcast_interval_secs;
     /* The list of out edges from this node */
     pb_size_t neighbors_count;
-    meshtastic_Neighbor neighbors[10];
+    meshtastic_Neighbor neighbors[20];
 } meshtastic_NeighborInfo;
 
 /* Device metadata response */
@@ -1195,8 +1200,8 @@ extern "C" {
 #define meshtastic_FileInfo_init_default         {"", 0}
 #define meshtastic_ToRadio_init_default          {0, {meshtastic_MeshPacket_init_default}}
 #define meshtastic_Compressed_init_default       {_meshtastic_PortNum_MIN, {0, {0}}}
-#define meshtastic_NeighborInfo_init_default     {0, 0, 0, 0, {meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default}}
-#define meshtastic_Neighbor_init_default         {0, 0, 0, 0}
+#define meshtastic_NeighborInfo_init_default     {0, 0, 0, 0, {meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default, meshtastic_Neighbor_init_default}}
+#define meshtastic_Neighbor_init_default         {0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_DeviceMetadata_init_default   {"", 0, 0, 0, 0, 0, _meshtastic_Config_DeviceConfig_Role_MIN, 0, _meshtastic_HardwareModel_MIN, 0, 0, 0}
 #define meshtastic_Heartbeat_init_default        {0}
 #define meshtastic_NodeRemoteHardwarePin_init_default {0, false, meshtastic_RemoteHardwarePin_init_default}
@@ -1220,8 +1225,8 @@ extern "C" {
 #define meshtastic_FileInfo_init_zero            {"", 0}
 #define meshtastic_ToRadio_init_zero             {0, {meshtastic_MeshPacket_init_zero}}
 #define meshtastic_Compressed_init_zero          {_meshtastic_PortNum_MIN, {0, {0}}}
-#define meshtastic_NeighborInfo_init_zero        {0, 0, 0, 0, {meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero}}
-#define meshtastic_Neighbor_init_zero            {0, 0, 0, 0}
+#define meshtastic_NeighborInfo_init_zero        {0, 0, 0, 0, {meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero, meshtastic_Neighbor_init_zero}}
+#define meshtastic_Neighbor_init_zero            {0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_DeviceMetadata_init_zero      {"", 0, 0, 0, 0, 0, _meshtastic_Config_DeviceConfig_Role_MIN, 0, _meshtastic_HardwareModel_MIN, 0, 0, 0}
 #define meshtastic_Heartbeat_init_zero           {0}
 #define meshtastic_NodeRemoteHardwarePin_init_zero {0, false, meshtastic_RemoteHardwarePin_init_zero}
@@ -1345,6 +1350,9 @@ extern "C" {
 #define meshtastic_Neighbor_snr_tag              2
 #define meshtastic_Neighbor_last_rx_time_tag     3
 #define meshtastic_Neighbor_node_broadcast_interval_secs_tag 4
+#define meshtastic_Neighbor_num_packets_rx_tag   5
+#define meshtastic_Neighbor_rssi_tag             6
+#define meshtastic_Neighbor_battery_level_tag    7
 #define meshtastic_NeighborInfo_node_id_tag      1
 #define meshtastic_NeighborInfo_last_sent_by_id_tag 2
 #define meshtastic_NeighborInfo_node_broadcast_interval_secs_tag 3
@@ -1636,7 +1644,10 @@ X(a, STATIC,   REPEATED, MESSAGE,  neighbors,         4)
 X(a, STATIC,   SINGULAR, UINT32,   node_id,           1) \
 X(a, STATIC,   SINGULAR, FLOAT,    snr,               2) \
 X(a, STATIC,   SINGULAR, FIXED32,  last_rx_time,      3) \
-X(a, STATIC,   SINGULAR, UINT32,   node_broadcast_interval_secs,   4)
+X(a, STATIC,   SINGULAR, UINT32,   node_broadcast_interval_secs,   4) \
+X(a, STATIC,   SINGULAR, UINT32,   num_packets_rx,    5) \
+X(a, STATIC,   SINGULAR, INT32,    rssi,              6) \
+X(a, STATIC,   SINGULAR, UINT32,   battery_level,     7)
 #define meshtastic_Neighbor_CALLBACK NULL
 #define meshtastic_Neighbor_DEFAULT NULL
 
@@ -1746,7 +1757,7 @@ extern const pb_msgdesc_t meshtastic_ChunkedPayloadResponse_msg;
 /* Maximum encoded size of messages (where known) */
 /* meshtastic_resend_chunks_size depends on runtime parameters */
 /* meshtastic_ChunkedPayloadResponse_size depends on runtime parameters */
-#define MESHTASTIC_MESHTASTIC_MESH_PB_H_MAX_SIZE meshtastic_FromRadio_size
+#define MESHTASTIC_MESHTASTIC_MESH_PB_H_MAX_SIZE meshtastic_NeighborInfo_size
 #define meshtastic_ChunkedPayload_size           245
 #define meshtastic_ClientNotification_size       415
 #define meshtastic_Compressed_size               239
@@ -1759,8 +1770,8 @@ extern const pb_msgdesc_t meshtastic_ChunkedPayloadResponse_msg;
 #define meshtastic_MeshPacket_size               378
 #define meshtastic_MqttClientProxyMessage_size   501
 #define meshtastic_MyNodeInfo_size               77
-#define meshtastic_NeighborInfo_size             258
-#define meshtastic_Neighbor_size                 22
+#define meshtastic_NeighborInfo_size             958
+#define meshtastic_Neighbor_size                 45
 #define meshtastic_NodeInfo_size                 319
 #define meshtastic_NodeRemoteHardwarePin_size    29
 #define meshtastic_Position_size                 144

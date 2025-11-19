@@ -30,9 +30,6 @@ PB_BIND(meshtastic_ErrorMetrics, meshtastic_ErrorMetrics, AUTO)
 PB_BIND(meshtastic_Telemetry, meshtastic_Telemetry, AUTO)
 
 
-PB_BIND(meshtastic_nodeStats, meshtastic_nodeStats, AUTO)
-
-
 PB_BIND(meshtastic_Nau7802Config, meshtastic_Nau7802Config, AUTO)
 
 
