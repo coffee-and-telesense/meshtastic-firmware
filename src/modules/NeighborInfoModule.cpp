@@ -19,8 +19,10 @@ void NeighborInfoModule::printNeighborInfo(const char *header, const meshtastic_
               np->last_sent_by_id);
     LOG_DEBUG("Packet contains %d neighbors", np->neighbors_count);
     for (int i = 0; i < np->neighbors_count; i++) {
-        LOG_DEBUG("Neighbor %d: node_id=0x%x, snr=%.2f", i, np->neighbors[i].node_id, np->neighbors[i].snr);
-        LOG_DEBUG("\t rssi=%d, battery_level=%u", i, np->neighbors[i].rssi, np->neighbors[i].battery_level);
+        LOG_DEBUG("Neighbor %d: node_id=0x%x, snr=%.2f rssi=%d", i, np->neighbors[i].node_id, np->neighbors[i].snr,
+                  np->neighbors[i].rssi);
+        LOG_DEBUG("Neighbor %d: pkts_rxd_from_neighbor=%u, last_rx_time=%u", i, np->neighbors[i].num_packets_rx,
+                  np->neighbors[i].last_rx_time);
     }
 }
 
@@ -32,7 +34,9 @@ void NeighborInfoModule::printNodeDBNeighbors()
 {
     LOG_DEBUG("Our NodeDB contains %d neighbors", neighbors.size());
     for (size_t i = 0; i < neighbors.size(); i++) {
-        LOG_DEBUG("Node %d: node_id=0x%x, snr=%.2f", i, neighbors[i].node_id, neighbors[i].snr);
+        LOG_DEBUG("Node %d: node_id=0x%x, snr=%.2f rssi=%d", i, neighbors[i].node_id, neighbors[i].snr, neighbors[i].rssi);
+        LOG_DEBUG("Node %d: pkts_rxd_from_neighbor=%u, last_rx_time=%u", i, neighbors[i].num_packets_rx,
+                  neighbors[i].last_rx_time);
     }
 }
 
@@ -74,7 +78,6 @@ uint32_t NeighborInfoModule::collectNeighborInfo(meshtastic_NeighborInfo *neighb
         if ((neighborInfo->neighbors_count < MAX_NUM_NEIGHBORS) && (nbr.node_id != my_node_id)) {
             neighborInfo->neighbors[neighborInfo->neighbors_count].node_id = nbr.node_id;
             neighborInfo->neighbors[neighborInfo->neighbors_count].snr = nbr.snr;
-            neighborInfo->neighbors[neighborInfo->neighbors_count].battery_level = nbr.battery_level;
             neighborInfo->neighbors[neighborInfo->neighbors_count].last_rx_time = nbr.last_rx_time;
             neighborInfo->neighbors[neighborInfo->neighbors_count].num_packets_rx = nbr.num_packets_rx;
             neighborInfo->neighbors[neighborInfo->neighbors_count].rssi = nbr.rssi;
@@ -197,14 +200,6 @@ meshtastic_Neighbor *NeighborInfoModule::getOrCreateNeighbor(NodeNum originalSen
             neighbors[i].last_rx_time = getTime();
             neighbors[i].rssi = rssi;
 
-            // update last battery_level status from nodedb
-            meshtastic_NodeInfoLite *x = nodeDB->getMeshNode(n);
-            if (x->has_device_metrics) {
-                if (x->device_metrics.has_battery_level) {
-                    neighbors[i].battery_level = x->device_metrics.battery_level;
-                }
-            }
-
             // TODO: packet counts
 
             // Only if this is the original sender, the broadcast interval corresponds
@@ -221,14 +216,6 @@ meshtastic_Neighbor *NeighborInfoModule::getOrCreateNeighbor(NodeNum originalSen
     new_nbr.snr = snr;
     new_nbr.rssi = rssi;
     new_nbr.last_rx_time = getTime();
-
-    // update last battery_level status from nodedb
-    meshtastic_NodeInfoLite *x = nodeDB->getMeshNode(n);
-    if (x->has_device_metrics) {
-        if (x->device_metrics.has_battery_level) {
-            new_nbr.battery_level = x->device_metrics.battery_level;
-        }
-    }
 
     // TODO: packet counts
 
