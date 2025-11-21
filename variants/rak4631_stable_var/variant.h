@@ -38,25 +38,42 @@
 #define MESHTASTIC_EXCLUDE_ERROR_TELEMETRY 0
 
 // Minimize the image's features
-#define MESHTASTIC_EXCLUDE_MQTT 1
-#define MESHTASTIC_EXCLUDE_SCREEN 1
-#define MESHTASTIC_EXCLUDE_BLUETOOTH 1
+// #define MESHTASTIC_EXCLUDE_MODULES 1
 #define MESHTASTIC_EXCLUDE_WIFI 1
+#define MESHTASTIC_EXCLUDE_BLUETOOTH 1
+// #define MESHTASTIC_EXCLUDE_GPS 1
+#define MESHTASTIC_EXCLUDE_SCREEN 1
+#define MESHTASTIC_EXCLUDE_MQTT 1
+// #define MESHTASTIC_EXCLUDE_POWERMON 1
+// #define MESHTASTIC_EXCLUDE_I2C 1
+// #define MESHTASTIC_EXCLUDE_PKI 1
+// #define MESHTASTIC_EXCLUDE_POWER_FSM 1
+// #define MESHTASTIC_EXCLUDE_TZ 1
 
 // Minimize the images modules
 #define MESHTASTIC_EXCLUDE_AUDIO 1
 #define MESHTASTIC_EXCLUDE_DETECTIONSENSOR 1
+// #define MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR 1
 #define MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY 1
 #define MESHTASTIC_EXCLUDE_EXTERNALNOTIFICATION 1
 #define MESHTASTIC_EXCLUDE_PAXCOUNTER 1
+// #define MESHTASTIC_EXCLUDE_POWER_TELEMETRY 1
+// #define MESHTASTIC_EXCLUDE_ERROR_TELEMETRY 1
 #define MESHTASTIC_EXCLUDE_RANGETEST 1
 #define MESHTASTIC_EXCLUDE_REMOTEHARDWARE 1
 #define MESHTASTIC_EXCLUDE_STOREFORWARD 1
+// we still want to forward texts
+// #define MESHTASTIC_EXCLUDE_TEXTMESSAGE 1
 #define MESHTASTIC_EXCLUDE_ATAK 1
 #define MESHTASTIC_EXCLUDE_CANNEDMESSAGES 1
+// #define MESHTASTIC_EXCLUDE_NEIGHBORINFO 1
+#define MESHTASTIC_EXCLUDE_TRACEROUTE 1
 #define MESHTASTIC_EXCLUDE_WAYPOINT 1
 #define MESHTASTIC_EXCLUDE_INPUTBROKER 1
+// used for sending messages from serial across mesh, do not need
+#define MESHTASTIC_EXCLUDE_SERIAL 1
 #define MESHTASTIC_EXCLUDE_POWERSTRESS 1
+#define MESHTASTIC_EXCLUDE_ADMIN 1
 
 /*----------------------------------------------------------------------------
  *        Headers
@@ -206,7 +223,8 @@ static const uint8_t SCK = PIN_SPI_SCK;
 
 // RAK4630 LoRa module
 
-/* Setup of the SX1262 LoRa module ( https://docs.rakwireless.com/Product-Categories/WisBlock/RAK4631/Datasheet/ )
+/* Setup of the SX1262 LoRa module (
+https://docs.rakwireless.com/Product-Categories/WisBlock/RAK4631/Datasheet/ )
 
 P1.10   NSS     SPI NSS (Arduino GPIO number 42)
 P1.11   SCK     SPI CLK (Arduino GPIO number 43)
@@ -221,8 +239,8 @@ Important for successful SX1262 initialization:
 * Setup DIO2 to control the antenna switch
 * Setup DIO3 to control the TCXO power supply
 * Setup the SX1262 to use it's DCDC regulator and not the LDO
-* RAK4630 schematics show GPIO P1.07 connected to the antenna switch, but it should not be initialized, as DIO2 will do the
-control of the antenna switch
+* RAK4630 schematics show GPIO P1.07 connected to the antenna switch, but it
+should not be initialized, as DIO2 will do the control of the antenna switch
 
 SO GPIO 39/TXEN MAY NOT BE DEFINED FOR SUCCESSFUL OPERATION OF THE SX1262 - TG
 
@@ -252,17 +270,17 @@ SO GPIO 39/TXEN MAY NOT BE DEFINED FOR SUCCESSFUL OPERATION OF THE SX1262 - TG
 // RAK1910 GPS module
 // If using the wisblock GPS module and pluged into Port A on WisBlock base
 // IO1 is hooked to PPS (pin 12 on header) = gpio 17
-// IO2 is hooked to GPS RESET = gpio 34, but it can not be used to this because IO2 is ALSO used to control 3V3_S power (1 is on).
-// Therefore must be 1 to keep peripherals powered
-// Power is on the controllable 3V3_S rail
-// #define PIN_GPS_RESET (34)
-// #define PIN_GPS_EN PIN_3V3_EN
+// IO2 is hooked to GPS RESET = gpio 34, but it can not be used to this because
+// IO2 is ALSO used to control 3V3_S power (1 is on). Therefore must be 1 to
+// keep peripherals powered Power is on the controllable 3V3_S rail #define
+// PIN_GPS_RESET (34) #define PIN_GPS_EN PIN_3V3_EN
 #define PIN_GPS_PPS (17) // Pulse per second input from the GPS
 
 #define GPS_RX_PIN PIN_SERIAL1_RX
 #define GPS_TX_PIN PIN_SERIAL1_TX
 
-// Define pin to enable GPS toggle (set GPIO to LOW) via user button triple press
+// Define pin to enable GPS toggle (set GPIO to LOW) via user button triple
+// press
 
 // RAK12002 RTC Module
 #define RV3028_RTC (uint8_t)0b1010010
