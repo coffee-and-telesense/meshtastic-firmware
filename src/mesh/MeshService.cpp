@@ -25,22 +25,26 @@
 #endif
 
 /*
-receivedPacketQueue - this is a queue of messages we've received from the mesh, which we are keeping to deliver to the phone.
-It is implemented with a FreeRTos queue (wrapped with a little RTQueue class) of pointers to MeshPacket protobufs (which were
-alloced with new). After a packet ptr is removed from the queue and processed it should be deleted.  (eventually we should move
-sent packets into a 'sentToPhone' queue of packets we can delete just as soon as we are sure the phone has acked those packets -
-when the phone writes to FromNum)
+receivedPacketQueue - this is a queue of messages we've received from the mesh,
+which we are keeping to deliver to the phone. It is implemented with a FreeRTos
+queue (wrapped with a little RTQueue class) of pointers to MeshPacket protobufs
+(which were alloced with new). After a packet ptr is removed from the queue and
+processed it should be deleted.  (eventually we should move sent packets into a
+'sentToPhone' queue of packets we can delete just as soon as we are sure the
+phone has acked those packets - when the phone writes to FromNum)
 
-mesh - an instance of Mesh class.  Which manages the interface to the mesh radio library, reception of packets from other nodes,
-arbitrating to select a node number and keeping the current nodedb.
+mesh - an instance of Mesh class.  Which manages the interface to the mesh radio
+library, reception of packets from other nodes, arbitrating to select a node
+number and keeping the current nodedb.
 
 */
 
 /* Broadcast when a newly powered mesh node wants to find a node num it can use
 
 The algorithm is as follows:
-* when a node starts up, it broadcasts their user and the normal flow is for all other nodes to reply with their User as well (so
-the new node can build its node db)
+* when a node starts up, it broadcasts their user and the normal flow is for all
+other nodes to reply with their User as well (so the new node can build its node
+db)
 */
 
 MeshService *service;
@@ -78,13 +82,24 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
 {
     powerFSM.trigger(EVENT_PACKET_FOR_PHONE); // Possibly keep the node from sleeping
 
-    nodeDB->updateFrom(*mp); // update our DB state based off sniffing every RX packet from the radio
+    nodeDB->updateFrom(*mp); // update our DB state based off sniffing every RX
+                             // packet from the radio
     bool isPreferredRebroadcaster =
         IS_ONE_OF(config.device.role, meshtastic_Config_DeviceConfig_Role_ROUTER, meshtastic_Config_DeviceConfig_Role_REPEATER);
     if (mp->which_payload_variant == meshtastic_MeshPacket_decoded_tag &&
         mp->decoded.portnum == meshtastic_PortNum_TELEMETRY_APP && mp->decoded.request_id > 0) {
-        LOG_DEBUG("Received telemetry response. Skip sending our NodeInfo"); //  because this potentially a Repeater which will
-                                                                             //  ignore our request for its NodeInfo
+        LOG_DEBUG("Received telemetry response. Skip sending our NodeInfo"); //  because
+                                                                             //  this
+                                                                             //  potentially
+                                                                             //  a
+                                                                             //  Repeater
+                                                                             //  which
+                                                                             //  will
+                                                                             //  ignore
+                                                                             //  our
+                                                                             //  request
+                                                                             //  for its
+                                                                             //  NodeInfo
     } else if (mp->which_payload_variant == meshtastic_MeshPacket_decoded_tag && !nodeDB->getMeshNode(mp->from)->has_user &&
                nodeInfoModule && !isPreferredRebroadcaster && !nodeDB->isFull()) {
         if (airTime->isTxAllowedChannelUtil(true)) {
@@ -101,7 +116,8 @@ int MeshService::handleFromRadio(const meshtastic_MeshPacket *mp)
     return 0;
 }
 
-/// Do idle processing (mostly processing messages which have been queued from the radio)
+/// Do idle processing (mostly processing messages which have been queued from
+/// the radio)
 void MeshService::loop()
 {
     if (lastQueueStatus.free == 0) { // check if there is now free space in TX queue
@@ -109,20 +125,23 @@ void MeshService::loop()
         if (qs.free != lastQueueStatus.free)
             (void)sendQueueStatusToPhone(qs, 0, 0);
     }
-    if (oldFromNum != fromNum) { // We don't want to generate extra notifies for multiple new packets
+    if (oldFromNum != fromNum) { // We don't want to generate extra notifies for
+                                 // multiple new packets
         int result = fromNumChanged.notifyObservers(fromNum);
         if (result == 0) // If any observer returns non-zero, we will try again
             oldFromNum = fromNum;
     }
 }
 
-/// The radioConfig object just changed, call this to force the hw to change to the new settings
+/// The radioConfig object just changed, call this to force the hw to change to
+/// the new settings
 bool MeshService::reloadConfig(int saveWhat)
 {
     // If we can successfully set this radio to these settings, save them to disk
 
     // This will also update the region as needed
-    bool didReset = nodeDB->resetRadioConfig(); // Don't let the phone send us fatally bad settings
+    bool didReset = nodeDB->resetRadioConfig(); // Don't let the phone send us
+                                                // fatally bad settings
 
     configChanged.notifyObservers(NULL); // This will cause radio hardware to change freqs etc
     nodeDB->saveToDisk(saveWhat);
@@ -130,7 +149,8 @@ bool MeshService::reloadConfig(int saveWhat)
     return didReset;
 }
 
-/// The owner User record just got updated, update our node DB and broadcast the info into the mesh
+/// The owner User record just got updated, update our node DB and broadcast the
+/// info into the mesh
 void MeshService::reloadOwner(bool shouldSave)
 {
     // LOG_DEBUG("reloadOwner()");
@@ -160,8 +180,9 @@ NodeNum MeshService::getNodenumFromRequestId(uint32_t request_id)
 }
 
 /**
- *  Given a ToRadio buffer parse it and properly handle it (setup radio, owner or send packet into the mesh)
- * Called by PhoneAPI.handleToRadio.  Note: p is a scratch buffer, this function is allowed to write to it but it can not keep a
+ *  Given a ToRadio buffer parse it and properly handle it (setup radio, owner
+ * or send packet into the mesh) Called by PhoneAPI.handleToRadio.  Note: p is a
+ * scratch buffer, this function is allowed to write to it but it can not keep a
  * reference
  */
 void MeshService::handleToRadio(meshtastic_MeshPacket &p)
@@ -185,16 +206,18 @@ void MeshService::handleToRadio(meshtastic_MeshPacket &p)
 
     sendToMesh(packetPool.allocCopy(p), RX_SRC_USER);
 
-    bool loopback = false; // if true send any packet the phone sends back itself (for testing)
+    bool loopback = false; // if true send any packet the phone sends back itself
+                           // (for testing)
     if (loopback) {
-        // no need to copy anymore because handle from radio assumes it should _not_ delete
-        // packetPool.allocCopy(r.variant.packet);
+        // no need to copy anymore because handle from radio assumes it should _not_
+        // delete packetPool.allocCopy(r.variant.packet);
         handleFromRadio(&p);
         // handleFromRadio will tell the phone a new packet arrived
     }
 }
 
-/** Attempt to cancel a previously sent packet from this _local_ node.  Returns true if a packet was found we could cancel */
+/** Attempt to cancel a previously sent packet from this _local_ node.  Returns
+ * true if a packet was found we could cancel */
 bool MeshService::cancelSending(PacketId id)
 {
     return router->cancelSending(nodeDB->getNodeNum(), id);
@@ -225,9 +248,11 @@ ErrorCode MeshService::sendQueueStatusToPhone(const meshtastic_QueueStatus &qs, 
 void MeshService::sendToMesh(meshtastic_MeshPacket *p, RxSource src, bool ccToPhone)
 {
     uint32_t mesh_packet_id = p->id;
-    nodeDB->updateFrom(*p); // update our local DB for this packet (because phone might have sent position packets etc...)
+    nodeDB->updateFrom(*p); // update our local DB for this packet (because phone
+                            // might have sent position packets etc...)
 
-    // Note: We might return !OK if our fifo was full, at that point the only option we have is to drop it
+    // Note: We might return !OK if our fifo was full, at that point the only
+    // option we have is to drop it
     ErrorCode res = router->sendLocal(p, src);
 
     /* NOTE(pboldin): Prepare and send QueueStatus message to the phone as a
@@ -296,7 +321,8 @@ void MeshService::sendToPhone(meshtastic_MeshPacket *p)
         } else {
             LOG_WARN("ToPhone queue is full, drop packet");
             releaseToPool(p);
-            fromNum++; // Make sure to notify observers in case they are reconnected so they can get the packets
+            fromNum++; // Make sure to notify observers in case they are reconnected
+                       // so they can get the packets
             return;
         }
     }
@@ -338,7 +364,8 @@ meshtastic_NodeInfoLite *MeshService::refreshLocalMeshNode()
     meshtastic_NodeInfoLite *node = nodeDB->getMeshNode(nodeDB->getNodeNum());
     assert(node);
 
-    // We might not have a position yet for our local node, in that case, at least try to send the time
+    // We might not have a position yet for our local node, in that case, at least
+    // try to send the time
     if (!node->has_position) {
         memset(&node->position, 0, sizeof(node->position));
         node->has_position = true;
@@ -346,9 +373,10 @@ meshtastic_NodeInfoLite *MeshService::refreshLocalMeshNode()
 
     meshtastic_PositionLite &position = node->position;
 
-    // Update our local node info with our time (even if we don't decide to update anyone else)
-    node->last_heard =
-        getValidTime(RTCQualityFromNet); // This nodedb timestamp might be stale, so update it if our clock is kinda valid
+    // Update our local node info with our time (even if we don't decide to update
+    // anyone else)
+    node->last_heard = getValidTime(RTCQualityFromNet); // This nodedb timestamp might be stale, so update it
+                                                        // if our clock is kinda valid
 
     position.time = getValidTime(RTCQualityFromNet);
 
@@ -362,7 +390,8 @@ meshtastic_NodeInfoLite *MeshService::refreshLocalMeshNode()
 #if HAS_GPS
 int MeshService::onGPSChanged(const meshtastic::GPSStatus *newStatus)
 {
-    // Update our local node info with our position (even if we don't decide to update anyone else)
+    // Update our local node info with our position (even if we don't decide to
+    // update anyone else)
     const meshtastic_NodeInfoLite *node = refreshLocalMeshNode();
     meshtastic_Position pos = meshtastic_Position_init_default;
 

@@ -185,6 +185,16 @@ void NeighborInfoModule::updateNeighbors(const meshtastic_MeshPacket &mp, const 
     }
 }
 
+void NeighborInfoModule::updateNeighborPacketCount(const meshtastic_MeshPacket &mp)
+{
+    // look for it in the existing list
+    for (size_t i = 0; i < neighbors.size(); i++) {
+        if (neighbors[i].node_id == mp.from) {
+            neighbors[i].node_id++;
+        }
+    }
+}
+
 meshtastic_Neighbor *NeighborInfoModule::getOrCreateNeighbor(NodeNum originalSender, NodeNum n,
                                                              uint32_t node_broadcast_interval_secs, float snr, int32_t rssi)
 {

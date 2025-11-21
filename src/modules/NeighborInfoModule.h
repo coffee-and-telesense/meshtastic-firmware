@@ -22,6 +22,9 @@ class NeighborInfoModule : public ProtobufModule<meshtastic_NeighborInfo>, priva
     /* Reset neighbor info after clearing nodeDB*/
     void resetNeighbors();
 
+    /* update neighbor packet rx count */
+    void updateNeighborPacketCount(const meshtastic_MeshPacket &mp);
+
   protected:
     /*
      * Called to handle a particular incoming message
