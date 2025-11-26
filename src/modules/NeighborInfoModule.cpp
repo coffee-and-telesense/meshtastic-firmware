@@ -190,7 +190,7 @@ void NeighborInfoModule::updateNeighborPacketCount(const meshtastic_MeshPacket &
     // look for it in the existing list
     for (size_t i = 0; i < neighbors.size(); i++) {
         if (neighbors[i].node_id == mp.from) {
-            neighbors[i].node_id++;
+            neighbors[i].num_packets_rx++;
         }
     }
 }
