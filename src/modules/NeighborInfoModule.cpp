@@ -191,6 +191,9 @@ void NeighborInfoModule::updateNeighborPacketCount(const meshtastic_MeshPacket &
     for (size_t i = 0; i < neighbors.size(); i++) {
         if (neighbors[i].node_id == mp.from) {
             neighbors[i].num_packets_rx++;
+            neighbors[i].snr = mp.rx_snr;
+            neighbors[i].last_rx_time = getTime();
+            neighbors[i].rssi = mp.rx_rssi;
         }
     }
 }
