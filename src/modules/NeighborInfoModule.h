@@ -1,6 +1,6 @@
 #pragma once
 #include "ProtobufModule.h"
-#define MAX_NUM_NEIGHBORS 20 // also defined in NeighborInfo protobuf options
+#define MAX_NUM_NEIGHBORS 10 // also defined in NeighborInfo protobuf options
 
 /*
  * Neighborinfo module for sending info on each node's 0-hop neighbors to the
