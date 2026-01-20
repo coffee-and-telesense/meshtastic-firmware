@@ -31,12 +31,14 @@ int32_t AirQualityTelemetryModule::runOnce()
     // moduleConfig.telemetry.air_quality_enabled = 1;
 
     if (!(moduleConfig.telemetry.air_quality_enabled)) {
-        // If this module is not enabled, and the user doesn't want the display screen don't waste any OSThread time on it
+        // If this module is not enabled, and the user doesn't want the display
+        // screen don't waste any OSThread time on it
         return disable();
     }
 
     if (firstTime) {
-        // This is the first time the OSThread library has called this function, so do some setup
+        // This is the first time the OSThread library has called this function, so
+        // do some setup
         firstTime = false;
 
         if (moduleConfig.telemetry.air_quality_enabled) {
@@ -46,6 +48,8 @@ int32_t AirQualityTelemetryModule::runOnce()
             if (scd30Sensor.hasSensor()) {
                 scd30Sensor.runOnce();
                 return 1000;
+            } else {
+                return disable();
             }
 #endif
 
@@ -53,7 +57,8 @@ int32_t AirQualityTelemetryModule::runOnce()
             if (!aqi.begin_I2C()) {
 #ifndef I2C_NO_RESCAN
                 LOG_WARN("Could not establish i2c connection to AQI sensor. Rescan");
-                // rescan for late arriving sensors. AQI Module starts about 10 seconds into the boot so this is plenty.
+                // rescan for late arriving sensors. AQI Module starts about 10 seconds
+                // into the boot so this is plenty.
                 uint8_t i2caddr_scan[] = {PMSA0031_ADDR};
                 uint8_t i2caddr_asize = 1;
                 auto i2cScanner = std::unique_ptr<ScanI2CTwoWire>(new ScanI2CTwoWire());
@@ -76,7 +81,8 @@ int32_t AirQualityTelemetryModule::runOnce()
         }
         return disable();
     } else {
-        // if we somehow got to a second run of this module with measurement disabled, then just wait forever
+        // if we somehow got to a second run of this module with measurement
+        // disabled, then just wait forever
         if (!moduleConfig.telemetry.air_quality_enabled)
             return disable();
 
@@ -103,11 +109,13 @@ bool AirQualityTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPack
 #ifdef DEBUG_PORT
         const char *sender = getSenderShortName(mp);
 
-        LOG_INFO("(Received from %s): pm10_standard=%i, pm25_standard=%i, pm100_standard=%i", sender,
-                 t->variant.air_quality_metrics.pm10_standard, t->variant.air_quality_metrics.pm25_standard,
+        LOG_INFO("(Received from %s): pm10_standard=%i, pm25_standard=%i, "
+                 "pm100_standard=%i",
+                 sender, t->variant.air_quality_metrics.pm10_standard, t->variant.air_quality_metrics.pm25_standard,
                  t->variant.air_quality_metrics.pm100_standard);
 
-        LOG_INFO("                  | PM1.0(Environmental)=%i, PM2.5(Environmental)=%i, PM10.0(Environmental)=%i",
+        LOG_INFO("                  | PM1.0(Environmental)=%i, "
+                 "PM2.5(Environmental)=%i, PM10.0(Environmental)=%i",
                  t->variant.air_quality_metrics.pm10_environmental, t->variant.air_quality_metrics.pm25_environmental,
                  t->variant.air_quality_metrics.pm100_environmental);
 
@@ -163,7 +171,8 @@ bool AirQualityTelemetryModule::getAirQualityTelemetry(meshtastic_Telemetry *m)
     LOG_INFO("Send: PM1.0(Standard)=%i, PM2.5(Standard)=%i, PM10.0(Standard)=%i", m->variant.air_quality_metrics.pm10_standard,
              m->variant.air_quality_metrics.pm25_standard, m->variant.air_quality_metrics.pm100_standard);
 
-    LOG_INFO("         | PM1.0(Environmental)=%i, PM2.5(Environmental)=%i, PM10.0(Environmental)=%i",
+    LOG_INFO("         | PM1.0(Environmental)=%i, PM2.5(Environmental)=%i, "
+             "PM10.0(Environmental)=%i",
              m->variant.air_quality_metrics.pm10_environmental, m->variant.air_quality_metrics.pm25_environmental,
              m->variant.air_quality_metrics.pm100_environmental);
 
