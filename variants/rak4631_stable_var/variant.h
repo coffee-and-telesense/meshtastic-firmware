@@ -26,8 +26,6 @@
 #define USE_LFXO // Board uses 32khz crystal for LF
 // define USE_LFRC    // Board uses RC for LF
 
-#define FREQ_433 1
-
 #undef MESHTASTIC_MINIMIZE_BUILD
 
 // Yes, we are using the SCD30 for both Air Quality and Environment Metrics
