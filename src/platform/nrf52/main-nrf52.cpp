@@ -244,22 +244,31 @@ void nrf52InitSemiHosting()
 }
 #endif
 
+#ifdef SERIAL_RENAMING
+void nrf52SerialRename()
+{
+    char name[32];
+    sprintf(name, "WisCore RAK4631 Board %s%g", myRegion->name, myRegion->freqStart);
+
+    LOG_INFO("Setting USB descriptor to %s", name);
+    delay(1);
+
+    TinyUSBDevice.detach();
+    delay(100);
+
+    TinyUSBDevice.setProductDescriptor(name);
+
+    delay(100);
+    TinyUSBDevice.attach();
+}
+#endif
+
 void nrf52Setup()
 {
     uint32_t why = NRF_POWER->RESETREAS;
     // per
     // https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52832.ps.v1.1%2Fpower.html
     LOG_DEBUG("Reset reason: 0x%x", why);
-
-    LOG_INFO("Setting USB descriptor to match frequency");
-
-    TinyUSBDevice.detach();
-    delay(100);
-
-    TinyUSBDevice.setProductDescriptor(strcat("WisCore RAK4631 Board ", myRegion->name));
-
-    delay(100);
-    TinyUSBDevice.attach();
 
 #ifdef USE_SEMIHOSTING
     nrf52InitSemiHosting();
