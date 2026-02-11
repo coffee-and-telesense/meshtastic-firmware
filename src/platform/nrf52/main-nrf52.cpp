@@ -28,10 +28,10 @@ static inline void debugger_break(void)
 bool loopCanSleep()
 {
     // turn off sleep only while connected via USB
-    return true;
-    // return !Serial; // the bool operator on the nrf52 serial class returns true
-    // if connected to a PC currently return !(TinyUSBDevice.mounted() &&
-    // !TinyUSBDevice.suspended());
+    // return true;
+    return !Serial; // the bool operator on the nrf52 serial class returns true
+                    // if connected to a PC currently return !(TinyUSBDevice.mounted() &&
+                    // !TinyUSBDevice.suspended());
 }
 
 // handle standard gcc assert failures
