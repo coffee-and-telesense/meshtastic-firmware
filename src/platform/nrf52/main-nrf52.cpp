@@ -9,6 +9,7 @@
 #include <memory.h>
 #include <stdio.h>
 // #include <Adafruit_USBD_Device.h>
+#include "MeshRadio.h"
 #include "NodeDB.h"
 #include "PowerMon.h"
 #include "error.h"
@@ -18,6 +19,8 @@
 #ifdef BQ25703A_ADDR
 #include "BQ25713.h"
 #endif
+
+extern const RegionInfo *myRegion;
 
 static inline void debugger_break(void)
 {
@@ -253,7 +256,7 @@ void nrf52Setup()
     TinyUSBDevice.detach();
     delay(100);
 
-    TinyUSBDevice.setProductDescriptor("WisCore RAK4631 Board " + myRegion->name);
+    TinyUSBDevice.setProductDescriptor(strcat("WisCore RAK4631 Board ", myRegion->name));
 
     delay(100);
     TinyUSBDevice.attach();
