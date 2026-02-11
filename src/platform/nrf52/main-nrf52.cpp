@@ -28,9 +28,10 @@ static inline void debugger_break(void)
 bool loopCanSleep()
 {
     // turn off sleep only while connected via USB
-    // return true;
-    return !Serial; // the bool operator on the nrf52 serial class returns true if connected to a PC currently
-    // return !(TinyUSBDevice.mounted() && !TinyUSBDevice.suspended());
+    return true;
+    // return !Serial; // the bool operator on the nrf52 serial class returns true
+    // if connected to a PC currently return !(TinyUSBDevice.mounted() &&
+    // !TinyUSBDevice.suspended());
 }
 
 // handle standard gcc assert failures
@@ -63,10 +64,12 @@ static void initBrownout()
     err_code = sd_power_pof_threshold_set(vccthresh);
     assert(err_code == NRF_SUCCESS);
 
-    // We don't bother with setting up brownout if soft device is disabled - because during production we always use softdevice
+    // We don't bother with setting up brownout if soft device is disabled -
+    // because during production we always use softdevice
 }
 
-// This is a public global so that the debugger can set it to false automatically from our gdbinit
+// This is a public global so that the debugger can set it to false
+// automatically from our gdbinit
 bool useSoftDevice = true; // Set to false for easier debugging
 
 #if !MESHTASTIC_EXCLUDE_BLUETOOTH
@@ -120,7 +123,8 @@ void setBluetoothEnable(bool enable)
 void setBluetoothEnable(bool enable) {}
 #endif
 /**
- * Override printf to use the SEGGER output library (note - this does not effect the printf method on the debug console)
+ * Override printf to use the SEGGER output library (note - this does not effect
+ * the printf method on the debug console)
  */
 int printf(const char *fmt, ...)
 {
@@ -137,7 +141,8 @@ constexpr uint8_t NRF52_MAGIC_LFS_IS_CORRUPT = 0xF5;
 constexpr uint32_t MULTIPLE_CORRUPTION_DELAY_MILLIS = 20 * 60 * 1000;
 static unsigned long millis_until_formatting_again = 0;
 
-// Report the critical error from loop(), giving a chance for the screen to be initialized first.
+// Report the critical error from loop(), giving a chance for the screen to be
+// initialized first.
 inline void reportLittleFSCorruptionOnce()
 {
     static bool report_corruption = !!millis_until_formatting_again;
@@ -150,8 +155,9 @@ inline void reportLittleFSCorruptionOnce()
 
 void preFSBegin()
 {
-    // The GPREGRET register keeps its value across warm boots. Check that this is a warm boot and, if GPREGRET
-    // is set to NRF52_MAGIC_LFS_IS_CORRUPT, format LittleFS.
+    // The GPREGRET register keeps its value across warm boots. Check that this is
+    // a warm boot and, if GPREGRET is set to NRF52_MAGIC_LFS_IS_CORRUPT, format
+    // LittleFS.
     if (!(NRF_POWER->RESETREAS == 0 && NRF_POWER->GPREGRET == NRF52_MAGIC_LFS_IS_CORRUPT))
         return;
     NRF_POWER->GPREGRET = 0;
@@ -171,8 +177,9 @@ extern "C" void lfs_assert(const char *reason)
     }
     LOG_INFO("Rebooting to format LittleFS");
     delay(500); // Give the serial port a bit of time to output that last message.
-    // Try setting GPREGRET with the SoftDevice first. If that fails (perhaps because the SD hasn't been initialize yet) then set
-    // NRF_POWER->GPREGRET directly.
+    // Try setting GPREGRET with the SoftDevice first. If that fails (perhaps
+    // because the SD hasn't been initialize yet) then set NRF_POWER->GPREGRET
+    // directly.
     if (!(sd_power_gpregret_clr(0, 0xFF) == NRF_SUCCESS && sd_power_gpregret_set(0, NRF52_MAGIC_LFS_IS_CORRUPT) == NRF_SUCCESS)) {
         NRF_POWER->GPREGRET = NRF52_MAGIC_LFS_IS_CORRUPT;
     }
@@ -212,7 +219,8 @@ void nrf52Loop()
 
 /**
  * Note: this variable is in BSS and therfore false by default.  But the gdbinit
- * file will be installing a temporary breakpoint that changes wantSemihost to true.
+ * file will be installing a temporary breakpoint that changes wantSemihost to
+ * true.
  */
 bool wantSemihost;
 
@@ -223,8 +231,8 @@ void nrf52InitSemiHosting()
 {
     if (wantSemihost) {
         static SemihostingStream semiStream;
-        // We must dynamically alloc because the constructor does semihost operations which
-        // would crash any load not talking to a debugger
+        // We must dynamically alloc because the constructor does semihost
+        // operations which would crash any load not talking to a debugger
         semiStream.open();
         semiStream.println("Semihosting starts!");
         // Redirect our serial output to instead go via the ICE port
@@ -239,6 +247,22 @@ void nrf52Setup()
     // per
     // https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52832.ps.v1.1%2Fpower.html
     LOG_DEBUG("Reset reason: 0x%x", why);
+
+#ifdef FREQ_433
+    LOG_INFO("Setting USB descriptor to 433MHz");
+    TinyUSBDevice.detach();
+    delay(100);
+    TinyUSBDevice.setProductDescriptor("WisCore RAK4631 Board 433MHz");
+    delay(100);
+    TinyUSBDevice.attach();
+#else
+    LOG_INFO("Setting USB descriptor to 915MHz");
+    TinyUSBDevice.detach();
+    delay(100);
+    TinyUSBDevice.setProductDescriptor("WisCore RAK4631 Board 915MHz");
+    delay(100);
+    TinyUSBDevice.attach();
+#endif
 
 #ifdef USE_SEMIHOSTING
     nrf52InitSemiHosting();
@@ -311,7 +335,8 @@ void cpuDeepSleep(uint32_t msecToWake)
     detachInterrupt(PIN_BUTTON1);
 #endif
     // Sleepy trackers or sensors can low power "sleep"
-    // Don't enter this if we're sleeping portMAX_DELAY, since that's a shutdown event
+    // Don't enter this if we're sleeping portMAX_DELAY, since that's a shutdown
+    // event
     if (msecToWake != portMAX_DELAY &&
         (IS_ONE_OF(config.device.role, meshtastic_Config_DeviceConfig_Role_TRACKER,
                    meshtastic_Config_DeviceConfig_Role_TAK_TRACKER, meshtastic_Config_DeviceConfig_Role_SENSOR) &&
@@ -330,7 +355,8 @@ void cpuDeepSleep(uint32_t msecToWake)
         // https://devzone.nordicsemi.com/f/nordic-q-a/48919/ram-retention-settings-with-softdevice-enabled
         auto ok = sd_power_system_off();
         if (ok != NRF_SUCCESS) {
-            LOG_ERROR("FIXME: Ignoring soft device (EasyDMA pending?) and forcing system-off!");
+            LOG_ERROR("FIXME: Ignoring soft device (EasyDMA pending?) and forcing "
+                      "system-off!");
             NRF_POWER->SYSTEMOFF = 1;
         }
     }
