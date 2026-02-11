@@ -1451,7 +1451,8 @@ void NodeDB::updateFrom(const meshtastic_MeshPacket &mp)
 
         // If not via MQTT, and possibly a neighbor, update the rx count in the
         // neighborinfo
-        neighborInfoModule->updateNeighborPacketCount(mp);
+        if (neighborInfoModule && !mp.via_mqtt)
+            neighborInfoModule->updateNeighborPacketCount(mp);
 
         // If hopStart was set and there wasn't someone messing with the limit
         // in the middle, add hopsAway
