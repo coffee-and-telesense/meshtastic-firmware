@@ -194,6 +194,7 @@ void NeighborInfoModule::updateNeighborPacketCount(const meshtastic_MeshPacket &
             neighbors[i].snr = mp.rx_snr;
             neighbors[i].last_rx_time = getTime();
             neighbors[i].rssi = mp.rx_rssi;
+            break;
         }
     }
 }

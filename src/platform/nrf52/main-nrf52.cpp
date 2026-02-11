@@ -30,8 +30,8 @@ bool loopCanSleep()
     // turn off sleep only while connected via USB
     // return true;
     return !Serial; // the bool operator on the nrf52 serial class returns true
-                    // if connected to a PC currently return !(TinyUSBDevice.mounted() &&
-                    // !TinyUSBDevice.suspended());
+                    // if connected to a PC currently return
+                    // !(TinyUSBDevice.mounted() && !TinyUSBDevice.suspended());
 }
 
 // handle standard gcc assert failures
@@ -248,21 +248,15 @@ void nrf52Setup()
     // https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52832.ps.v1.1%2Fpower.html
     LOG_DEBUG("Reset reason: 0x%x", why);
 
-#ifdef FREQ_433
-    LOG_INFO("Setting USB descriptor to 433MHz");
+    LOG_INFO("Setting USB descriptor to match frequency");
+
     TinyUSBDevice.detach();
     delay(100);
-    TinyUSBDevice.setProductDescriptor("WisCore RAK4631 Board 433MHz");
+
+    TinyUSBDevice.setProductDescriptor("WisCore RAK4631 Board " + myRegion->name);
+
     delay(100);
     TinyUSBDevice.attach();
-#else
-    LOG_INFO("Setting USB descriptor to 915MHz");
-    TinyUSBDevice.detach();
-    delay(100);
-    TinyUSBDevice.setProductDescriptor("WisCore RAK4631 Board 915MHz");
-    delay(100);
-    TinyUSBDevice.attach();
-#endif
 
 #ifdef USE_SEMIHOSTING
     nrf52InitSemiHosting();
