@@ -846,12 +846,6 @@ void setup()
 #endif
 #endif
 
-#ifdef SERIAL_RENAMING
-#ifdef ARCH_NRF52
-    nrf52SerialRename();
-#endif
-#endif
-
     screen->print("Started...\n");
 
 #ifdef PIN_PWR_DELAY_MS

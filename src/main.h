@@ -80,10 +80,6 @@ extern bool pauseBluetoothLogging;
 
 void nrf52Setup(), esp32Setup(), nrf52Loop(), esp32Loop(), rp2040Setup(), clearBonds(), enterDfuMode();
 
-#ifdef SERIAL_RENAMING
-void nrf52SerialRename();
-#endif
-
 meshtastic_DeviceMetadata getDeviceMetadata();
 #if !MESHTASTIC_EXCLUDE_I2C
 void scannerToSensorsMap(const std::unique_ptr<ScanI2CTwoWire> &i2cScanner, ScanI2C::DeviceType deviceType,
