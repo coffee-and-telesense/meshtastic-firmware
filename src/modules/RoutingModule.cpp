@@ -7,6 +7,10 @@
 #include "main.h"
 #include "meshtastic/mesh.pb.h"
 #include "modules/Modules.h"
+#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
+#include "modules/Telemetry/ErrorTelemetry.h"
+extern ErrorTelemetryModule *errorTelemetryModule;
+#endif
 
 RoutingModule *routingModule;
 
@@ -28,33 +32,36 @@ bool RoutingModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mesh
     router->sniffReceived(&mp, r);
 
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-    LOG_INFO("Checking for error reason %d", r->error_reason);
-    switch (r->error_reason) {
-    case meshtastic_Routing_Error_NO_ROUTE:
-        errorTelemetryModule->noRouteCount++;
-        break;
-    case meshtastic_Routing_Error_GOT_NAK:
-        errorTelemetryModule->nakCount++;
-        break;
-    case meshtastic_Routing_Error_TIMEOUT:
-        errorTelemetryModule->timeoutCount++;
-        break;
-    case meshtastic_Routing_Error_MAX_RETRANSMIT:
-        errorTelemetryModule->maxReTxCount++;
-        break;
-    case meshtastic_Routing_Error_NO_CHANNEL:
-        errorTelemetryModule->noChCount++;
-        break;
-    case meshtastic_Routing_Error_TOO_LARGE:
-        errorTelemetryModule->largeCount++;
-        break;
-    default:
-        break;
+    if (r && errorTelemetryModule) {
+        LOG_INFO("Checking for error reason %d", r->error_reason);
+        switch (r->error_reason) {
+        case meshtastic_Routing_Error_NO_ROUTE:
+            errorTelemetryModule->noRouteCount++;
+            break;
+        case meshtastic_Routing_Error_GOT_NAK:
+            errorTelemetryModule->nakCount++;
+            break;
+        case meshtastic_Routing_Error_TIMEOUT:
+            errorTelemetryModule->timeoutCount++;
+            break;
+        case meshtastic_Routing_Error_MAX_RETRANSMIT:
+            errorTelemetryModule->maxReTxCount++;
+            break;
+        case meshtastic_Routing_Error_NO_CHANNEL:
+            errorTelemetryModule->noChCount++;
+            break;
+        case meshtastic_Routing_Error_TOO_LARGE:
+            errorTelemetryModule->largeCount++;
+            break;
+        default:
+            break;
+        }
     }
 #endif
 
     // FIXME - move this to a non promsicious PhoneAPI module?
-    // Note: we are careful not to send back packets that started with the phone back to the phone
+    // Note: we are careful not to send back packets that started with the phone
+    // back to the phone
     if ((isBroadcast(mp.to) || isToUs(&mp)) && (mp.from != 0)) {
         printPacket("Delivering rx packet", &mp);
         service->handleFromRadio(&mp);
@@ -69,10 +76,11 @@ meshtastic_MeshPacket *RoutingModule::allocReply()
         return NULL;
     assert(currentRequest);
 
-    // We only consider making replies if the request was a legit routing packet (not just something we were sniffing)
+    // We only consider making replies if the request was a legit routing packet
+    // (not just something we were sniffing)
     if (currentRequest->decoded.portnum == meshtastic_PortNum_ROUTING_APP) {
         assert(0); // 1.2 refactoring fixme, Not sure if anything needs this yet?
-        // return allocDataProtobuf(u);
+                   // return allocDataProtobuf(u);
     }
     return NULL;
 }
@@ -87,15 +95,19 @@ void RoutingModule::sendAckNak(meshtastic_Routing_Error err, NodeNum to, PacketI
 uint8_t RoutingModule::getHopLimitForResponse(uint8_t hopStart, uint8_t hopLimit)
 {
     if (hopStart != 0) {
-        // Hops used by the request. If somebody in between running modified firmware modified it, ignore it
+        // Hops used by the request. If somebody in between running modified
+        // firmware modified it, ignore it
         uint8_t hopsUsed = hopStart < hopLimit ? config.lora.hop_limit : hopStart - hopLimit;
         if (hopsUsed > config.lora.hop_limit) {
-// In event mode, we never want to send packets with more than our default 3 hops.
+// In event mode, we never want to send packets with more than our default 3
+// hops.
 #if !(EVENTMODE)             // This falls through to the default.
-            return hopsUsed; // If the request used more hops than the limit, use the same amount of hops
+            return hopsUsed; // If the request used more hops than the limit, use the
+                             // same amount of hops
 #endif
         } else if ((uint8_t)(hopsUsed + 2) < config.lora.hop_limit) {
-            return hopsUsed + 2; // Use only the amount of hops needed with some margin as the way back may be different
+            return hopsUsed + 2; // Use only the amount of hops needed with some
+                                 // margin as the way back may be different
         }
     }
     return Default::getConfiguredOrDefaultHopLimit(config.lora.hop_limit); // Use the default hop limit
