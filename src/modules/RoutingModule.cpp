@@ -7,10 +7,6 @@
 #include "main.h"
 #include "meshtastic/mesh.pb.h"
 #include "modules/Modules.h"
-#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-#include "modules/Telemetry/ErrorTelemetry.h"
-extern ErrorTelemetryModule *errorTelemetryModule;
-#endif
 
 RoutingModule *routingModule;
 
@@ -30,13 +26,6 @@ bool RoutingModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mesh
 
     printPacket("Routing sniffing", &mp);
     router->sniffReceived(&mp, r);
-
-#if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-    if (r && errorTelemetryModule && !isFromUs(&mp)) {
-        LOG_INFO("Checking for error reason %d", r->error_reason);
-        errorTelemetryModule->recordRoutingError(r->error_reason);
-    }
-#endif
 
     // FIXME - move this to a non promsicious PhoneAPI module?
     // Note: we are careful not to send back packets that started with the phone

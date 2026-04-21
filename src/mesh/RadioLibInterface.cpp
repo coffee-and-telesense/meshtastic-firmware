@@ -305,7 +305,7 @@ void RadioLibInterface::setTransmitDelay()
         // Sum the average tx delays to get a total
         if (errorTelemetryModule->receivedCount != 0) {
             LOG_DEBUG("Packet delayed, changing stats for error rate.");
-            errorTelemetryModule->total_tx_delay += p->tx_after;
+            errorTelemetryModule->total_tx_delay += (p->tx_after - now);
             errorTelemetryModule->count_avg_delay++;
             LOG_DEBUG("    total delay:%d counted delays:%d", errorTelemetryModule->total_tx_delay,
                       errorTelemetryModule->count_avg_delay);

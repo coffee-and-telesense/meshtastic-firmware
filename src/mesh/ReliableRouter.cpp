@@ -147,7 +147,7 @@ void ReliableRouter::sniffReceived(const meshtastic_MeshPacket *p, const meshtas
         // delete non existent retransmission records
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
         if (errorTelemetryModule && nakId)
-            errorTelemetryModule->recordRoutingError(meshtastic_Routing_Error_GOT_NAK);
+            errorTelemetryModule->recordRoutingError(c->error_reason);
 #endif
         if (ackId || nakId) {
             LOG_DEBUG("Received a %s for 0x%x, stopping retransmissions", ackId ? "ACK" : "NAK", ackId);

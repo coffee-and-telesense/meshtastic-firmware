@@ -49,7 +49,7 @@ bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
         const char *sender = getSenderShortName(mp);
 
         LOG_INFO("(Received from %s): period=%ds, collision_rate=%.2f%%, "
-                 "node_reach=%.2%%, num_nodes=%d,",
+                 "node_reach=%.2f%%, num_nodes=%d,",
                  sender, t->variant.error_metrics.period, t->variant.error_metrics.collision_rate,
                  t->variant.error_metrics.node_reach, t->variant.error_metrics.num_nodes);
         LOG_INFO("                    usefulness=%.2f%%, avg_delay=%dms", t->variant.error_metrics.usefulness,
@@ -92,30 +92,34 @@ meshtastic_MeshPacket *ErrorTelemetryModule::allocReply()
 meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
     if (RadioLibInterface::instance) {
-        // Total received packets (good and bad)
-        LOG_DEBUG("Sensed & Received count = %d rxBads + %d rxGoods", RadioLibInterface::instance->rxBad,
-                  RadioLibInterface::instance->rxGood);
-        this->receivedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
+        // Compute per-period deltas against snapshots taken at the last send.
+        uint32_t periodRxBad = RadioLibInterface::instance->rxBad - this->lastRxBad;
+        uint32_t periodRxGood = RadioLibInterface::instance->rxGood - this->lastRxGood;
+        uint32_t periodTxRelayCanceled = router->txRelayCanceled - this->lastTxRelayCanceled;
+        uint32_t periodRxDupe = router->rxDupe - this->lastRxDupe;
 
-        // Total sensed packets (good and bad)
-        // Assuming that sensed packets are the same as packets the antenna actually
-        // picks up, this is true. Need to double check my understanding with a
-        // antenna person.
-        this->sensedCount = this->receivedCount;
+        // Total received packets (good and bad) this period
+        LOG_DEBUG("Sensed & Received count = %d rxBads + %d rxGoods", periodRxBad, periodRxGood);
+        this->receivedCount = periodRxBad + periodRxGood;
 
-        // Total collided packets
+        // Total sensed packets: RX events plus TX-side collision events (timing
+        // collisions and relay cancellations). Including TX-side events here keeps
+        // collision_rate bounded to [0%, 100%] since collisionCount uses the same
+        // events.
+        this->sensedCount = this->receivedCount + this->timingCollisionCount + periodTxRelayCanceled;
+
+        // Total collided packets this period
         LOG_DEBUG("Collision count = %d timing collisions + %d rxBads + %d "
                   "txRelayCancels",
-                  this->timingCollisionCount, RadioLibInterface::instance->rxBad, router->txRelayCanceled);
-        this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
+                  this->timingCollisionCount, periodRxBad, periodTxRelayCanceled);
+        this->collisionCount = this->timingCollisionCount + periodRxBad + periodTxRelayCanceled;
 
         // Useful count is the received packets - dupes - bads
         // TODO: problem is that rxBads are being used in many different contexts
         // for packet receptions so: distinguish types of bads, add method to count
         // sensed signals that may not be packets(?) for sensedCount
-        LOG_DEBUG("Useful count = %d received - %d rxDupes - %d rxBads", this->receivedCount, router->rxDupe,
-                  RadioLibInterface::instance->rxBad);
-        this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
+        LOG_DEBUG("Useful count = %d received - %d rxDupes - %d rxBads", this->receivedCount, periodRxDupe, periodRxBad);
+        this->usefulCount = this->receivedCount - periodRxDupe - periodRxBad;
     }
 
     meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
@@ -157,7 +161,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         t.variant.error_metrics.has_num_nodes = true;
         t.variant.error_metrics.num_nodes = numNodes;
     } else {
-        t.variant.error_metrics.num_nodes = false;
+        t.variant.error_metrics.has_num_nodes = false;
     }
 
     if (this->receivedCount != 0) {
@@ -230,10 +234,27 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         service->sendToMesh(p, RX_SRC_LOCAL, true);
     }
 
-    // Reset values
+    // Reset per-period accumulators
     this->total_tx_delay = 0;
     this->count_avg_delay = 0;
     this->timingCollisionCount = 0;
+    this->noRouteCount = 0;
+    this->nakCount = 0;
+    this->timeoutCount = 0;
+    this->maxReTxCount = 0;
+    this->noChCount = 0;
+    this->largeCount = 0;
+
+    // Snapshot RadioLibInterface/FloodingRouter lifetime counters so the next
+    // period reports deltas rather than cumulative totals.
+    if (RadioLibInterface::instance) {
+        this->lastRxBad = RadioLibInterface::instance->rxBad;
+        this->lastRxGood = RadioLibInterface::instance->rxGood;
+    }
+    if (router) {
+        this->lastTxRelayCanceled = router->txRelayCanceled;
+        this->lastRxDupe = router->rxDupe;
+    }
     return true;
 }
 
@@ -242,24 +263,31 @@ void ErrorTelemetryModule::recordRoutingError(meshtastic_Routing_Error err)
     switch (err) {
     case meshtastic_Routing_Error_NO_ROUTE:
     case meshtastic_Routing_Error_NO_INTERFACE:
+        LOG_DEBUG("Routing error: NO_ROUTE/NO_INTERFACE (total=%d)", noRouteCount + 1);
         noRouteCount++;
         break;
     case meshtastic_Routing_Error_GOT_NAK:
+        LOG_DEBUG("Routing error: GOT_NAK (total=%d)", nakCount + 1);
         nakCount++;
         break;
     case meshtastic_Routing_Error_TIMEOUT:
+        LOG_DEBUG("Routing error: TIMEOUT (total=%d)", timeoutCount + 1);
         timeoutCount++;
         break;
     case meshtastic_Routing_Error_MAX_RETRANSMIT:
+        LOG_DEBUG("Routing error: MAX_RETRANSMIT (total=%d)", maxReTxCount + 1);
         maxReTxCount++;
         break;
     case meshtastic_Routing_Error_NO_CHANNEL:
+        LOG_DEBUG("Routing error: NO_CHANNEL (total=%d)", noChCount + 1);
         noChCount++;
         break;
     case meshtastic_Routing_Error_TOO_LARGE:
+        LOG_DEBUG("Routing error: TOO_LARGE (total=%d)", largeCount + 1);
         largeCount++;
         break;
     default:
+        LOG_DEBUG("Routing error: unknown (err=%d)", (int)err);
         break;
     }
 }
