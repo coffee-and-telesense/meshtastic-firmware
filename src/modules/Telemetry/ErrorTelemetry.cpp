@@ -48,9 +48,10 @@ bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
 #ifdef DEBUG_PORT
         const char *sender = getSenderShortName(mp);
 
-        LOG_INFO("(Received from %s): period=%ds, collision_rate=%.2f%%, node_reach=%.2%%, num_nodes=%d,", sender,
-                 t->variant.error_metrics.period, t->variant.error_metrics.collision_rate, t->variant.error_metrics.node_reach,
-                 t->variant.error_metrics.num_nodes);
+        LOG_INFO("(Received from %s): period=%ds, collision_rate=%.2f%%, "
+                 "node_reach=%.2%%, num_nodes=%d,",
+                 sender, t->variant.error_metrics.period, t->variant.error_metrics.collision_rate,
+                 t->variant.error_metrics.node_reach, t->variant.error_metrics.num_nodes);
         LOG_INFO("                    usefulness=%.2f%%, avg_delay=%dms", t->variant.error_metrics.usefulness,
                  t->variant.error_metrics.avg_delay);
         LOG_INFO("                    no_route=%d, naks=%d,", t->variant.error_metrics.noroute, t->variant.error_metrics.naks);
@@ -97,18 +98,21 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         this->receivedCount = RadioLibInterface::instance->rxBad + RadioLibInterface::instance->rxGood;
 
         // Total sensed packets (good and bad)
-        // Assuming that sensed packets are the same as packets the antenna actually picks up, this is true.
-        // Need to double check my understanding with a antenna person.
+        // Assuming that sensed packets are the same as packets the antenna actually
+        // picks up, this is true. Need to double check my understanding with a
+        // antenna person.
         this->sensedCount = this->receivedCount;
 
         // Total collided packets
-        LOG_DEBUG("Collision count = %d timing collisions + %d rxBads + %d txRelayCancels", this->timingCollisionCount,
-                  RadioLibInterface::instance->rxBad, router->txRelayCanceled);
+        LOG_DEBUG("Collision count = %d timing collisions + %d rxBads + %d "
+                  "txRelayCancels",
+                  this->timingCollisionCount, RadioLibInterface::instance->rxBad, router->txRelayCanceled);
         this->collisionCount = this->timingCollisionCount + RadioLibInterface::instance->rxBad + router->txRelayCanceled;
 
         // Useful count is the received packets - dupes - bads
-        // TODO: problem is that rxBads are being used in many different contexts for packet receptions
-        // so: distinguish types of bads, add method to count sensed signals that may not be packets(?) for sensedCount
+        // TODO: problem is that rxBads are being used in many different contexts
+        // for packet receptions so: distinguish types of bads, add method to count
+        // sensed signals that may not be packets(?) for sensedCount
         LOG_DEBUG("Useful count = %d received - %d rxDupes - %d rxBads", this->receivedCount, router->rxDupe,
                   RadioLibInterface::instance->rxBad);
         this->usefulCount = this->receivedCount - router->rxDupe - RadioLibInterface::instance->rxBad;
@@ -123,8 +127,9 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
     t.variant.error_metrics.has_period = true;
     t.variant.error_metrics.period = (millis() - this->lastSentToMesh) / 1000;
 
-    // Increment collision count if a power, frequency, spreading factor, and timing collide
-    // Then our collision rate is that count / the count of sensed packets
+    // Increment collision count if a power, frequency, spreading factor, and
+    // timing collide Then our collision rate is that count / the count of sensed
+    // packets
     if (this->sensedCount != 0) {
         t.variant.error_metrics.has_collision_rate = true;
         LOG_DEBUG("Collision rate calc: (%.2f collisions / %.2f sensed) * 100.0f", (float)this->collisionCount,
@@ -230,4 +235,31 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     this->count_avg_delay = 0;
     this->timingCollisionCount = 0;
     return true;
+}
+
+void ErrorTelemetryModule::recordRoutingError(meshtastic_Routing_Error err)
+{
+    switch (err) {
+    case meshtastic_Routing_Error_NO_ROUTE:
+    case meshtastic_Routing_Error_NO_INTERFACE:
+        noRouteCount++;
+        break;
+    case meshtastic_Routing_Error_GOT_NAK:
+        nakCount++;
+        break;
+    case meshtastic_Routing_Error_TIMEOUT:
+        timeoutCount++;
+        break;
+    case meshtastic_Routing_Error_MAX_RETRANSMIT:
+        maxReTxCount++;
+        break;
+    case meshtastic_Routing_Error_NO_CHANNEL:
+        noChCount++;
+        break;
+    case meshtastic_Routing_Error_TOO_LARGE:
+        largeCount++;
+        break;
+    default:
+        break;
+    }
 }

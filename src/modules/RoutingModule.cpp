@@ -32,30 +32,9 @@ bool RoutingModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, mesh
     router->sniffReceived(&mp, r);
 
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-    if (r && errorTelemetryModule) {
+    if (r && errorTelemetryModule && !isFromUs(&mp)) {
         LOG_INFO("Checking for error reason %d", r->error_reason);
-        switch (r->error_reason) {
-        case meshtastic_Routing_Error_NO_ROUTE:
-            errorTelemetryModule->noRouteCount++;
-            break;
-        case meshtastic_Routing_Error_GOT_NAK:
-            errorTelemetryModule->nakCount++;
-            break;
-        case meshtastic_Routing_Error_TIMEOUT:
-            errorTelemetryModule->timeoutCount++;
-            break;
-        case meshtastic_Routing_Error_MAX_RETRANSMIT:
-            errorTelemetryModule->maxReTxCount++;
-            break;
-        case meshtastic_Routing_Error_NO_CHANNEL:
-            errorTelemetryModule->noChCount++;
-            break;
-        case meshtastic_Routing_Error_TOO_LARGE:
-            errorTelemetryModule->largeCount++;
-            break;
-        default:
-            break;
-        }
+        errorTelemetryModule->recordRoutingError(r->error_reason);
     }
 #endif
 

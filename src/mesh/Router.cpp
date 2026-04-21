@@ -157,21 +157,8 @@ void Router::abortSendAndNak(meshtastic_Routing_Error err, meshtastic_MeshPacket
     LOG_ERROR("Error=%d, return NAK and drop packet", err);
     sendAckNak(err, getFrom(p), p->id, p->channel);
 #if !MESHTASTIC_EXCLUDE_ERROR_TELEMETRY
-    if (errorTelemetryModule) {
-        switch (err) {
-        case meshtastic_Routing_Error_NO_INTERFACE:
-            errorTelemetryModule->noRouteCount++;
-            break;
-        case meshtastic_Routing_Error_TOO_LARGE:
-            errorTelemetryModule->largeCount++;
-            break;
-        case meshtastic_Routing_Error_NO_CHANNEL:
-            errorTelemetryModule->noChCount++;
-            break;
-        default:
-            break;
-        }
-    }
+    if (errorTelemetryModule)
+        errorTelemetryModule->recordRoutingError(err);
 #endif
     packetPool.release(p);
 }
