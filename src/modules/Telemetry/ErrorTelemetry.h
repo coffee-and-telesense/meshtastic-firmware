@@ -81,16 +81,7 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t collisionCount = 0;
     uint32_t sensedCount = 0;
 
-    // Snapshots of RadioLibInterface/FloodingRouter counters taken at the end
-    // of each send. getErrorTelemetry() computes deltas against these so that
-    // reported counts reflect the current measurement period, not device
-    // lifetime.
-    uint32_t lastRxBad = 0;
-    uint32_t lastRxGood = 0;
-    uint32_t lastTxRelayCanceled = 0;
-    uint32_t lastRxDupe = 0;
-
-    // Routing error counts (reset after each send)
+    // Routing error counts (lifetime cumulative)
     uint32_t noRouteCount = 0;
     uint32_t nakCount = 0;
     uint32_t timeoutCount = 0;

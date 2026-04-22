@@ -21,10 +21,11 @@ int32_t ErrorTelemetryModule::runOnce()
     refreshUptime();
     bool isImpoliteRole =
         IS_ONE_OF(config.device.role, meshtastic_Config_DeviceConfig_Role_SENSOR, meshtastic_Config_DeviceConfig_Role_ROUTER);
-    if (((lastSentToMesh == 0) ||
-         ((uptimeLastMs - lastSentToMesh) >= Default::getConfiguredOrDefaultMsScaled(moduleConfig.telemetry.error_update_interval,
-                                                                                     default_telemetry_broadcast_interval_secs,
-                                                                                     numOnlineNodes))) &&
+    uint32_t meshIntervalMs = Default::getConfiguredOrDefaultMsScaled(moduleConfig.telemetry.error_update_interval,
+                                                                      default_telemetry_broadcast_interval_secs, numOnlineNodes);
+    LOG_DEBUG("ErrorTelemetry mesh interval: %dms (configured=%ds, elapsed=%dms)", meshIntervalMs,
+              moduleConfig.telemetry.error_update_interval, uptimeLastMs - lastSentToMesh);
+    if (((lastSentToMesh == 0) || ((uptimeLastMs - lastSentToMesh) >= meshIntervalMs)) &&
         airTime->isTxAllowedChannelUtil(!isImpoliteRole) && airTime->isTxAllowedAirUtil() &&
         config.device.role != meshtastic_Config_DeviceConfig_Role_REPEATER &&
         config.device.role != meshtastic_Config_DeviceConfig_Role_CLIENT_HIDDEN) {
@@ -48,10 +49,10 @@ bool ErrorTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
 #ifdef DEBUG_PORT
         const char *sender = getSenderShortName(mp);
 
-        LOG_INFO("(Received from %s): period=%ds, collision_rate=%.2f%%, "
+        LOG_INFO("(Received from %s): collision_rate=%.2f%%, "
                  "node_reach=%.2f%%, num_nodes=%d,",
-                 sender, t->variant.error_metrics.period, t->variant.error_metrics.collision_rate,
-                 t->variant.error_metrics.node_reach, t->variant.error_metrics.num_nodes);
+                 sender, t->variant.error_metrics.collision_rate, t->variant.error_metrics.node_reach,
+                 t->variant.error_metrics.num_nodes);
         LOG_INFO("                    usefulness=%.2f%%, avg_delay=%dms", t->variant.error_metrics.usefulness,
                  t->variant.error_metrics.avg_delay);
         LOG_INFO("                    no_route=%d, naks=%d,", t->variant.error_metrics.noroute, t->variant.error_metrics.naks);
@@ -92,44 +93,33 @@ meshtastic_MeshPacket *ErrorTelemetryModule::allocReply()
 meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 {
     if (RadioLibInterface::instance) {
-        // Compute per-period deltas against snapshots taken at the last send.
-        uint32_t periodRxBad = RadioLibInterface::instance->rxBad - this->lastRxBad;
-        uint32_t periodRxGood = RadioLibInterface::instance->rxGood - this->lastRxGood;
-        uint32_t periodTxRelayCanceled = router->txRelayCanceled - this->lastTxRelayCanceled;
-        uint32_t periodRxDupe = router->rxDupe - this->lastRxDupe;
+        // Use lifetime cumulative counters so collision_rate and usefulness
+        // are always populated and reflect the full device lifetime.
+        uint32_t rxBad = RadioLibInterface::instance->rxBad;
+        uint32_t rxGood = RadioLibInterface::instance->rxGood;
+        uint32_t txRelayCanceled = router ? router->txRelayCanceled : 0;
+        uint32_t rxDupe = router ? router->rxDupe : 0;
 
-        // Total received packets (good and bad) this period
-        LOG_DEBUG("Sensed & Received count = %d rxBads + %d rxGoods", periodRxBad, periodRxGood);
-        this->receivedCount = periodRxBad + periodRxGood;
+        LOG_DEBUG("Lifetime received = %d rxBad + %d rxGood", rxBad, rxGood);
+        this->receivedCount = rxBad + rxGood;
 
-        // Total sensed packets: RX events plus TX-side collision events (timing
-        // collisions and relay cancellations). Including TX-side events here keeps
-        // collision_rate bounded to [0%, 100%] since collisionCount uses the same
-        // events.
-        this->sensedCount = this->receivedCount + this->timingCollisionCount + periodTxRelayCanceled;
+        // sensedCount includes TX-side events to keep collision_rate <= 100%.
+        this->sensedCount = this->receivedCount + this->timingCollisionCount + txRelayCanceled;
 
-        // Total collided packets this period
-        LOG_DEBUG("Collision count = %d timing collisions + %d rxBads + %d "
-                  "txRelayCancels",
-                  this->timingCollisionCount, periodRxBad, periodTxRelayCanceled);
-        this->collisionCount = this->timingCollisionCount + periodRxBad + periodTxRelayCanceled;
+        LOG_DEBUG("Collision count = %d timing + %d rxBad + %d txRelayCanceled", this->timingCollisionCount, rxBad,
+                  txRelayCanceled);
+        this->collisionCount = this->timingCollisionCount + rxBad + txRelayCanceled;
 
-        // Useful count is the received packets - dupes - bads
-        // TODO: problem is that rxBads are being used in many different contexts
-        // for packet receptions so: distinguish types of bads, add method to count
-        // sensed signals that may not be packets(?) for sensedCount
-        LOG_DEBUG("Useful count = %d received - %d rxDupes - %d rxBads", this->receivedCount, periodRxDupe, periodRxBad);
-        this->usefulCount = this->receivedCount - periodRxDupe - periodRxBad;
+        // Clamp to 0 to guard against counter ordering edge cases at boot.
+        uint32_t rxGoodMinusDupe = rxGood > rxDupe ? rxGood - rxDupe : 0;
+        LOG_DEBUG("Useful count = %d rxGood - %d rxDupe", rxGood, rxDupe);
+        this->usefulCount = rxGoodMinusDupe;
     }
 
     meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
     t.which_variant = meshtastic_Telemetry_error_metrics_tag;
     t.time = getTime();
     t.variant.error_metrics = meshtastic_ErrorMetrics_init_zero;
-
-    // Some time period (seconds) which the measures occur over as set by users
-    t.variant.error_metrics.has_period = true;
-    t.variant.error_metrics.period = (millis() - this->lastSentToMesh) / 1000;
 
     // Increment collision count if a power, frequency, spreading factor, and
     // timing collide Then our collision rate is that count / the count of sensed
@@ -203,7 +193,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
 bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
 {
     meshtastic_Telemetry telemetry = getErrorTelemetry();
-    LOG_INFO("Send: period=%ds", telemetry.variant.error_metrics.period);
+    LOG_INFO("Send error telemetry (lifetime counters):");
     if (telemetry.variant.error_metrics.has_collision_rate)
         LOG_INFO("      collision_rate=%.2f%%", telemetry.variant.error_metrics.collision_rate);
     if (telemetry.variant.error_metrics.has_node_reach)
@@ -234,27 +224,9 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
         service->sendToMesh(p, RX_SRC_LOCAL, true);
     }
 
-    // Reset per-period accumulators
+    // Reset per-period accumulators (avg_delay only; all counts are lifetime)
     this->total_tx_delay = 0;
     this->count_avg_delay = 0;
-    this->timingCollisionCount = 0;
-    this->noRouteCount = 0;
-    this->nakCount = 0;
-    this->timeoutCount = 0;
-    this->maxReTxCount = 0;
-    this->noChCount = 0;
-    this->largeCount = 0;
-
-    // Snapshot RadioLibInterface/FloodingRouter lifetime counters so the next
-    // period reports deltas rather than cumulative totals.
-    if (RadioLibInterface::instance) {
-        this->lastRxBad = RadioLibInterface::instance->rxBad;
-        this->lastRxGood = RadioLibInterface::instance->rxGood;
-    }
-    if (router) {
-        this->lastTxRelayCanceled = router->txRelayCanceled;
-        this->lastRxDupe = router->rxDupe;
-    }
     return true;
 }
 
