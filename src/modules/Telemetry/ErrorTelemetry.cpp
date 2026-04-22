@@ -168,9 +168,7 @@ meshtastic_Telemetry ErrorTelemetryModule::getErrorTelemetry()
         LOG_DEBUG("Avg delay = (%d total delay ms / %d total count of delays)", this->total_tx_delay, this->count_avg_delay);
         t.variant.error_metrics.avg_delay = (this->total_tx_delay / this->count_avg_delay);
     } else {
-        // Send 0 ms to report no average delay
-        t.variant.error_metrics.has_avg_delay = true;
-        t.variant.error_metrics.avg_delay = 0;
+        t.variant.error_metrics.has_avg_delay = false;
     }
 
     // Counts of specific errors
@@ -222,11 +220,12 @@ bool ErrorTelemetryModule::sendTelemetry(NodeNum dest, bool phoneOnly)
     } else {
         LOG_INFO("Send packet to mesh");
         service->sendToMesh(p, RX_SRC_LOCAL, true);
+
+        // Reset per-period accumulators (avg_delay only; all counts are lifetime)
+        this->total_tx_delay = 0;
+        this->count_avg_delay = 0;
     }
 
-    // Reset per-period accumulators (avg_delay only; all counts are lifetime)
-    this->total_tx_delay = 0;
-    this->count_avg_delay = 0;
     return true;
 }
 
