@@ -19,7 +19,7 @@
 #define default_node_info_broadcast_secs 3 * 60 * 60
 #define default_neighbor_info_broadcast_secs 6 * 60 * 60
 #define min_node_info_broadcast_secs 60 * 60 // No regular broadcasts of more than once an hour
-#define min_neighbor_info_broadcast_secs 4 * 60 * 60
+#define min_neighbor_info_broadcast_secs 60 * 60
 
 #define default_mqtt_address "mqtt.meshtastic.org"
 #define default_mqtt_username "meshdev"
@@ -65,7 +65,8 @@ class Default
                 return 1.0; // Don't bother throttling for highest bandwidth presets
             // Scaling up traffic based on number of nodes over 40
             int nodesOverForty = (numOnlineNodes - 40);
-            return 1.0 + (nodesOverForty * throttlingFactor); // Each number of online node scales by 0.075 (default)
+            return 1.0 + (nodesOverForty * throttlingFactor); // Each number of online node
+                                                              // scales by 0.075 (default)
         }
     }
 };

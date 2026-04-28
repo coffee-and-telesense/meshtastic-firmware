@@ -57,7 +57,7 @@ PB_BIND(meshtastic_ToRadio, meshtastic_ToRadio, 2)
 PB_BIND(meshtastic_Compressed, meshtastic_Compressed, AUTO)
 
 
-PB_BIND(meshtastic_NeighborInfo, meshtastic_NeighborInfo, AUTO)
+PB_BIND(meshtastic_NeighborInfo, meshtastic_NeighborInfo, 2)
 
 
 PB_BIND(meshtastic_Neighbor, meshtastic_Neighbor, AUTO)

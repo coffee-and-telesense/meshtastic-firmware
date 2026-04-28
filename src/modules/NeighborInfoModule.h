@@ -3,7 +3,8 @@
 #define MAX_NUM_NEIGHBORS 10 // also defined in NeighborInfo protobuf options
 
 /*
- * Neighborinfo module for sending info on each node's 0-hop neighbors to the mesh
+ * Neighborinfo module for sending info on each node's 0-hop neighbors to the
+ * mesh
  */
 class NeighborInfoModule : public ProtobufModule<meshtastic_NeighborInfo>, private concurrency::OSThread
 {
@@ -21,15 +22,20 @@ class NeighborInfoModule : public ProtobufModule<meshtastic_NeighborInfo>, priva
     /* Reset neighbor info after clearing nodeDB*/
     void resetNeighbors();
 
+    /* update neighbor packet rx count */
+    void updateNeighborPacketCount(const meshtastic_MeshPacket &mp);
+
   protected:
     /*
      * Called to handle a particular incoming message
-     * @return true if you've guaranteed you've handled this message and no other handlers should be considered for it
+     * @return true if you've guaranteed you've handled this message and no other
+     * handlers should be considered for it
      */
     virtual bool handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_NeighborInfo *nb) override;
 
     /*
-     * Collect neighbor info from the nodeDB's history, capping at a maximum number of entries and max time
+     * Collect neighbor info from the nodeDB's history, capping at a maximum
+     * number of entries and max time
      * @return the number of entries collected
      */
     uint32_t collectNeighborInfo(meshtastic_NeighborInfo *neighborInfo);
@@ -43,7 +49,8 @@ class NeighborInfoModule : public ProtobufModule<meshtastic_NeighborInfo>, priva
     meshtastic_NeighborInfo *allocateNeighborInfoPacket();
 
     // Find a neighbor in our DB, create an empty neighbor if missing
-    meshtastic_Neighbor *getOrCreateNeighbor(NodeNum originalSender, NodeNum n, uint32_t node_broadcast_interval_secs, float snr);
+    meshtastic_Neighbor *getOrCreateNeighbor(NodeNum originalSender, NodeNum n, uint32_t node_broadcast_interval_secs, float snr,
+                                             int32_t rssi);
 
     /*
      * Send info on our node's neighbors into the mesh
@@ -59,8 +66,9 @@ class NeighborInfoModule : public ProtobufModule<meshtastic_NeighborInfo>, priva
     /* Does our periodic broadcast */
     int32_t runOnce() override;
 
-    /* Override wantPacket to say we want to see all packets when enabled, not just those for our port number.
-      Exception is when the packet came via MQTT */
+    /* Override wantPacket to say we want to see all packets when enabled, not
+      just those for our port number. Exception is when the packet came via MQTT
+    */
     virtual bool wantPacket(const meshtastic_MeshPacket *p) override { return enabled && !p->via_mqtt; }
 
     /* These are for debugging only */

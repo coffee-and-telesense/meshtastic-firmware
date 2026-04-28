@@ -27,8 +27,8 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     virtual bool wantUIFrame() { return false; }
 
     /*
-      -Override the wantPacket method. We need the RxRSSI for counting sensed packets
-      in order to calculate the collision rate
+      -Override the wantPacket method. We need the RxRSSI for counting sensed
+      packets in order to calculate the collision rate
     */
     virtual bool wantPacket(const meshtastic_MeshPacket *p) override
     {
@@ -40,22 +40,20 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
         }
     }
 
+    /*
+     * Record the reason for a routing error for a packet
+     */
+    void recordRoutingError(meshtastic_Routing_Error err);
+
     uint32_t timingCollisionCount = 0;
     uint32_t count_avg_delay = 0;
-    uint32_t total_tx_delay = 0.0;
+    uint32_t total_tx_delay = 0;
     uint32_t receivedCount = 0;
-
-    // Routing error counts
-    uint32_t noRouteCount = 0;
-    uint32_t nakCount = 0;
-    uint32_t timeoutCount = 0;
-    uint32_t maxReTxCount = 0;
-    uint32_t noChCount = 0;
-    uint32_t largeCount = 0;
 
   protected:
     /** Called to handle a particular incoming message
-    @return true if you've guaranteed you've handled this message and no other handlers should be considered for it
+    @return true if you've guaranteed you've handled this message and no other
+    handlers should be considered for it
     */
     virtual bool handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Telemetry *p) override;
     virtual meshtastic_MeshPacket *allocReply() override;
@@ -82,6 +80,14 @@ class ErrorTelemetryModule : private concurrency::OSThread, public ProtobufModul
     uint32_t usefulCount = 0;
     uint32_t collisionCount = 0;
     uint32_t sensedCount = 0;
+
+    // Routing error counts (lifetime cumulative)
+    uint32_t noRouteCount = 0;
+    uint32_t nakCount = 0;
+    uint32_t timeoutCount = 0;
+    uint32_t maxReTxCount = 0;
+    uint32_t noChCount = 0;
+    uint32_t largeCount = 0;
 
     void refreshUptime()
     {

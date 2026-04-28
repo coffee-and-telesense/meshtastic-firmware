@@ -185,7 +185,6 @@ typedef struct _meshtastic_EnvironmentMetrics {
     float rainfall_24h;
     /* Sensor type */
     bool has_sensor;
-    /* Which sensor is sending the data */
     meshtastic_TelemetrySensorType sensor;
 } meshtastic_EnvironmentMetrics;
 
